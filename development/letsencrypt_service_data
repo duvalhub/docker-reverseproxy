@@ -1,0 +1,4 @@
+LETSENCRYPT_CONTAINERS=(
+                	'test-app_test-app3'
+)
+LETSENCRYPT_test-app_test-app3_HOST=('toto3.vps287088.duvalhub.com' )

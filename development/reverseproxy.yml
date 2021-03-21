@@ -1,0 +1,21 @@
+version: "3.8"
+volumes:
+  nginx-conf:
+
+networks:
+  reverseproxy:
+    external: true
+    name: reverseproxy
+
+services:
+  nginx:
+    image: nginx
+    deploy:
+      replicas: 1
+    volumes:
+      - nginx-conf:/etc/nginx
+    networks:
+      - reverseproxy
+    ports:
+      - 80:80
+      - 443:443
