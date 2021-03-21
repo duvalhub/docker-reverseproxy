@@ -8,7 +8,7 @@ default_cert="default.crt"
 default_key="default.key"
 default_pem="dhparam.pem"
 
-all_links=$(ls "$path_to_certs"|grep -v -e "$default_cert" -e "$default_key" -e "$default_pem") || all_links=""
+all_links="$(ls "$path_to_certs" | grep -v -e "$default_cert" -e "$default_key" -e "$default_pem")"
 
 echo "Clearing links..."
 for link in $all_links; do

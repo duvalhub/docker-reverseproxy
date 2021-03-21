@@ -6,7 +6,7 @@
 {
   "name": "test-app_test-app",
   "host": "toto.vps287088.duvalhub.com",
-  "ssl": null
+  "ssl": "true"
 }
 {
   "name": "test-app_test-app2",

@@ -3,6 +3,10 @@
   "host": "toto3.vps287088.duvalhub.com"
 }
 {
+  "name": "test-app_test-app",
+  "host": "toto.vps287088.duvalhub.com"
+}
+{
   "name": "test-app_test-app2",
   "host": "toto2.vps287088.duvalhub.com"
 }

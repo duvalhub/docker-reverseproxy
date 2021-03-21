@@ -80,11 +80,32 @@ docker_kill() {
     docker_api "/containers/$id/kill?signal=$signal" "POST"
 }
 
-
-
-
 function labeled_cid {
     docker_api "/containers/json" | jq -r '.[] | select(.Labels["'"$1"'"])|.Id'
+}
+
+
+function get_self_cid {
+    local self_cid=""
+
+    # Try the /proc files methods first then resort to the Docker API.
+    if [[ -f /proc/1/cpuset ]]; then
+        self_cid="$(grep -Eo '[[:alnum:]]{64}' /proc/1/cpuset)"
+    fi
+    if [[ ( ${#self_cid} != 64 ) && ( -f /proc/self/cgroup ) ]]; then
+        self_cid="$(grep -Eo -m 1 '[[:alnum:]]{64}' /proc/self/cgroup)"
+    fi
+    if [[ ( ${#self_cid} != 64 ) ]]; then
+        self_cid="$(docker_api "/containers/$(hostname)/json" | jq -r '.Id')"
+    fi
+
+    # If it's not 64 characters long, then it's probably not a container ID.
+    if [[ ${#self_cid} == 64 ]]; then
+        echo "$self_cid"
+    else
+        echo "$(date "+%Y/%m/%d %T"), Error: can't get my container ID !" >&2
+        return 1
+    fi
 }
 
 function get_nginx_proxy_container {
