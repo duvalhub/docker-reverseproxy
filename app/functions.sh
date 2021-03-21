@@ -5,7 +5,7 @@
 ############################
 log() {
     local level="$1"
-    echo "$(date '+%Y-%m-%d %H:%M:%S') [$level] - $@"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [$level] - $2"
 }
 
 log_info() {

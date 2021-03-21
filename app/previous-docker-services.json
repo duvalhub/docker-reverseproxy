@@ -1,12 +1,15 @@
 {
   "name": "test-app_test-app3",
-  "host": "toto3.vps287088.duvalhub.com"
+  "host": "toto3.vps287088.duvalhub.com",
+  "ssl": "true"
 }
 {
   "name": "test-app_test-app",
-  "host": "toto.vps287088.duvalhub.com"
+  "host": "toto.vps287088.duvalhub.com",
+  "ssl": null
 }
 {
   "name": "test-app_test-app2",
-  "host": "toto2.vps287088.duvalhub.com"
+  "host": "toto2.vps287088.duvalhub.com",
+  "ssl": "true"
 }

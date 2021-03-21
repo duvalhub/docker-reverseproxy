@@ -29,7 +29,7 @@ services:
       replicas: 2
       labels:
         reverseproxy.host: "toto3.vps287088.duvalhub.com"
-        # reverseproxy.ssl: "true"
+        reverseproxy.ssl: "true"
     networks:
       - reverseproxy
   test-app4:

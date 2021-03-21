@@ -10,7 +10,7 @@ generate_lets_encrypt_service_data() {
     echo "LETSENCRYPT_CONTAINERS=(" > "$destination"
     for entry in ${letsencrypt_services[@]}; do
         local name=$(echo "$entry" | cut -d';' -f1)
-        printf "'$name'\n" >> "$destination"
+        printf "\t'$name'\n" >> "$destination"
     done
     echo ")" >> "$destination"
 

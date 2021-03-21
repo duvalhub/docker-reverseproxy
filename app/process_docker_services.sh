@@ -48,7 +48,7 @@ process_services() {
         log_error "Services data is empty."
         return 1
     fi
-    echo "$data" | jq -r '.[] | select(.Spec.Labels | has("reverseproxy.host")) | {name: .Spec.Name, host: .Spec.Labels."reverseproxy.host"}'
+    echo "$data" | jq -r '.[] | select(.Spec.Labels | has("reverseproxy.host")) | {name: .Spec.Name, host: .Spec.Labels."reverseproxy.host", ssl: .Spec.Labels."reverseproxy.ssl"}'
 }
 
 process_ssl_services() {
@@ -65,46 +65,48 @@ process_ssl_services() {
 }
 
 evaluate_state() {
-    local current_services="$(mktemp)"
-    local previous_services="previous-docker-services.json"
+    log_info "[SERVICE] Evaluation if Service State Changed..."
+    local current="$(mktemp)"
+    local previous="previous-docker-services.json"
     local nginx_conf="$WORKDIR/nginx/conf.d/default.conf"
 
-    docker_list_services | process_services > "$current_services"
+    docker_list_services | process_services > "$current"
 
-    if [ "$force" = true ] || [ ! -f "$previous_services" ] || ! diff -q "$current_services" "$previous_services" ; then
-        log_info "Reloading Nginx State."
+    if [ "$force" = true ] || [ ! -f "$previous" ] || ! diff -q "$current" "$previous" > /dev/null ; then
+        log_info "[SERVICE] Service State Changed. Reloading Nginx State."
         > "$nginx_conf"
-        generate_nginx_conf "$current_services" "$nginx_conf"
-        mv "$current_services" "$previous_services"
+        generate_nginx_conf "$current" "$nginx_conf"
+        mv "$current" "$previous"
         reload_nginx
     else
-        log_info "Docker State didn't changed. Skipped"
+        log_info "[SERVICE] Docker State didn't changed. Skipped"
     fi
+    rm -f "$current"
 }
 
 evaluate_ssl_state() {
+    log_info "[SSL] Evaluation if SSL State Changed..."
     local current="$(mktemp)"
     local previous="previous_letsencrypt_service_data"
     local letsencrypt_service_data="letsencrypt_service_data"
 
     docker_list_services | process_ssl_services > "$current"
 
-    if [ "$force" = true ] || [ ! -f "$previous" ] || ! diff -q "$current" "$previous" ; then
-        log_info "Reloading Ssl State."
-        # generate_nginx_conf "$current" "$nginx_conf"
+    if [ "$force" = true ] || [ ! -f "$previous" ] || ! diff -q "$current" "$previous" > /dev/null ; then
+        log_info "[SSL] SSL State changed. Reload SSL State."
         generate_lets_encrypt_service_data "$current" "$letsencrypt_service_data"
         ./letsencrypt_fake.sh "$letsencrypt_service_data"
         mv "$current" "$previous"
-        # return 0
     else
-        log_info "Docker SSL State didn't changed. Skipped"
-        # return 1
+        log_info "[SSL] Docker SSL State didn't changed. Skipped"
     fi
+
+    rm -f "$current"
 }
 
 ##########################
 # Begin
 ##########################
-evaluate_state
-evaluate_ssl_state
-evaluate_state
+# evaluate_state || log_error "We crashed while evaluating state"
+evaluate_ssl_state || log_error "We crashed while evaluating ssl"
+evaluate_state || log_error "We crashed while evaluating state"
