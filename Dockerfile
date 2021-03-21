@@ -18,7 +18,8 @@ RUN apk add --update \
 WORKDIR /app
 
 ENV DEBUG=false \
-    DOCKER_HOST=unix:///var/run/docker.sock
+    DOCKER_HOST=unix:///var/run/docker.sock \
+    NGINX_HOME=/etc/nginx
 
 COPY app/entrypoint.sh ./
 COPY app/watcher.sh ./
@@ -26,6 +27,7 @@ COPY app/process_docker_services.sh ./
 COPY app/functions.sh ./
 COPY app/nginx_utils.sh ./
 COPY app/letsencrypt_utils.sh ./
+COPY app/letsencrypt_fake.sh ./
 
 ENTRYPOINT ["/bin/bash", "entrypoint.sh"]
 CMD ["/bin/bash", "watcher.sh"]

@@ -37,9 +37,9 @@ source functions.sh
 
 if [[ "$*" == "/bin/bash watcher.sh" ]]; then
     check_docker_socket
-    check_writable_directory '/etc/nginx/conf.d'
-    check_writable_directory '/etc/nginx/certs'
-    check_writable_directory '/usr/share/nginx/html'
+    check_writable_directory "$NGINX_HOME/conf.d"
+    check_writable_directory "$NGINX_HOME/certs"
+    # check_writable_directory '/usr/share/nginx/html'
 fi
 
 exec "$@"

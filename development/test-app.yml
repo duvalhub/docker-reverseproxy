@@ -37,8 +37,9 @@ services:
     image: nginxdemos/hello
     deploy:
       replicas: 2
-      # labels:
-        # reverseproxy.host: "toto4.vps287088.duvalhub.com"
+      labels:
+        reverseproxy.host: "toto4.vps287088.duvalhub.com"
+        # reverseproxy.ssl: "true"
     networks:
       - reverseproxy
 #  test-app5:

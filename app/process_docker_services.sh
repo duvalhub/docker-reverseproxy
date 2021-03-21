@@ -27,7 +27,7 @@ done
 ##########################
 export DOCKER_HOST=unix:///var/run/docker.sock
 export PREVIOUS_SERVICES="services.txt"
-export SSL_CERTIFICATES="$WORKDIR/nginx/certs"
+export SSL_CERTIFICATES="$NGINX_HOME/certs"
 
 ##########################
 # Source Utils
@@ -66,9 +66,12 @@ process_ssl_services() {
 
 evaluate_state() {
     log_info "[SERVICE] Evaluation if Service State Changed..."
+    if [ "$1" = "--force" ]; then
+        force=true
+    fi
     local current="$(mktemp)"
     local previous="previous-docker-services.json"
-    local nginx_conf="$WORKDIR/nginx/conf.d/default.conf"
+    local nginx_conf="$NGINX_HOME/conf.d/default.conf"
 
     docker_list_services | process_services > "$current"
 
@@ -97,6 +100,7 @@ evaluate_ssl_state() {
         generate_lets_encrypt_service_data "$current" "$letsencrypt_service_data"
         ./letsencrypt_fake.sh "$letsencrypt_service_data"
         mv "$current" "$previous"
+        evaluate_state --force
     else
         log_info "[SSL] Docker SSL State didn't changed. Skipped"
     fi
@@ -107,6 +111,5 @@ evaluate_ssl_state() {
 ##########################
 # Begin
 ##########################
-# evaluate_state || log_error "We crashed while evaluating state"
-evaluate_ssl_state || log_error "We crashed while evaluating ssl"
 evaluate_state || log_error "We crashed while evaluating state"
+evaluate_ssl_state || log_error "We crashed while evaluating state"

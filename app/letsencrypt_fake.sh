@@ -3,12 +3,12 @@ echo "Sourcing service data..."
 service_data="$1"
 source "$service_data"
 
-path_to_certs="$WORKDIR/nginx/certs"
+path_to_certs="$NGINX_HOME/certs"
 default_cert="default.crt"
 default_key="default.key"
 default_pem="dhparam.pem"
 
-all_links="$(ls "$path_to_certs" | grep -v -e "$default_cert" -e "$default_key" -e "$default_pem")"
+all_links=$(ls "$path_to_certs" | grep -v -e "$default_cert" -e "$default_key" -e "$default_pem") || all_links=""
 
 echo "Clearing links..."
 for link in $all_links; do

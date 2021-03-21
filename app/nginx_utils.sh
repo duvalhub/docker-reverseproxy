@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 generate_basic_nginx_conf() {
     cat <<-'EOF'
 # If we receive X-Forwarded-Proto, pass it through; otherwise, pass along the
@@ -89,7 +88,7 @@ EOF
 
 generate_basic_conf() {
     generate_basic_nginx_conf
-     if [ -f "$SSL_CERTIFICATES/default.crt" ] && [ -f "$SSL_CERTIFICATES/default.key" ]; then
+     if [ -f "$NGINX_HOME/certs/default.crt" ] && [ -f "$NGINX_HOME/certs/default.key" ]; then
         ssl=true
     fi
     local generator_fct
@@ -161,18 +160,21 @@ EOF
 nginx_write_block() {
     local name="$1"
     local dns="$2"
+    local destination="$3"
     local ssl=false
-    if [ -f "$SSL_CERTIFICATES/$dns.crt" ] && [ -f "$SSL_CERTIFICATES/$dns.key" ]; then
+    if [ -f "$NGINX_HOME/certs/$dns.crt" ] && [ -f "$NGINX_HOME/certs/$dns.key" ]; then
         ssl=true
     fi
     local generator_fct
     if [ "$ssl" = true ]; then
+        log_debug "Registering $name with $dns with ssl"
         generator_fct=nginx_write_https_block
     else
+        log_debug "Registering $name with $dns, no ssl."
         generator_fct=nginx_write_http_block
     fi
 
-    "$generator_fct" "$name" "$dns" 
+    "$generator_fct" "$name" "$dns" >> "$destination"
 }
 unregister_service() {
     usage() {
@@ -217,7 +219,7 @@ register_service() {
         usage
         return 1
     fi
-    nginx_write_block "$name" "$dns" >> "$destination"
+    nginx_write_block "$name" "$dns" "$destination"
 }
 
 generate_nginx_conf() {
@@ -243,6 +245,4 @@ EOF
     while IFS=$'\t' read -r name host; do
         register_service --name "$name" --dns "$host" --destination "$nginx_conf"
     done
-    # echo "Processing $services"
-    # cat "$services"
 }

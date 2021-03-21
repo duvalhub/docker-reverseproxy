@@ -21,7 +21,7 @@ log_error() {
 }
 
 log_debug() {
-    if [[ -n "$LOG_LEVEL" && "$LOG_LEVEL" = "DEBUG" ]]; then
+    if [[ "$DEBUG" = "true" ]]; then
         log "DEBUG" "$@"
     fi
 }
