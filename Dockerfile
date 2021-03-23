@@ -1,4 +1,11 @@
 FROM alpine:3.12.4
+ARG WORKDIR=/app
+WORKDIR ${WORKDIR}
+
+ENV DEBUG=false \
+    DOCKER_HOST=unix:///var/run/docker.sock \
+    NGINX_HOME=/etc/nginx \
+    DEVELOPMENT=false
 
 # Install packages required by the image
 RUN apk add --update \
@@ -10,24 +17,18 @@ RUN apk add --update \
         openssl \
     && rm /var/cache/apk/*
 
-# ARG USER=app
-# RUN addgroup -S $USER && adduser -S $USER -G $USER
-# USER $USER
-# ARG HOME=/home/$USER
-# WORKDIR $HOME
-WORKDIR /app
+# Install simp_le
+COPY /install_simp_le.sh /app/install_simp_le.sh
+# RUN chmod +rx /app/install_simp_le.sh \
+#     && sync \
+#     && /app/install_simp_le.sh \
+#     && rm -f /app/install_simp_le.sh
+RUN chmod +rx /app/install_simp_le.sh
+RUN sync
+RUN /app/install_simp_le.sh 
+RUN rm -f /app/install_simp_le.sh
+COPY /app/ ${WORKDIR}/
 
-ENV DEBUG=false \
-    DOCKER_HOST=unix:///var/run/docker.sock \
-    NGINX_HOME=/etc/nginx
-
-COPY app/entrypoint.sh ./
-COPY app/watcher.sh ./
-COPY app/process_docker_services.sh ./
-COPY app/functions.sh ./
-COPY app/nginx_utils.sh ./
-COPY app/letsencrypt_utils.sh ./
-COPY app/letsencrypt_fake.sh ./
 
 ENTRYPOINT ["/bin/bash", "entrypoint.sh"]
 CMD ["/bin/bash", "watcher.sh"]

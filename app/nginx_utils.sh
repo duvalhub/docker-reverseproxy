@@ -164,6 +164,8 @@ nginx_write_block() {
     local ssl=false
     if [ -f "$NGINX_HOME/certs/$dns.crt" ] && [ -f "$NGINX_HOME/certs/$dns.key" ]; then
         ssl=true
+    else
+        log_debug "Ssl not detected. "
     fi
     local generator_fct
     if [ "$ssl" = true ]; then
@@ -176,28 +178,28 @@ nginx_write_block() {
 
     "$generator_fct" "$name" "$dns" >> "$destination"
 }
-unregister_service() {
-    usage() {
-        echo "register_service [OPTIONS]"
-        return 1
-    }
-    while [[ $# -gt 0 ]]; do
-    local key="$1"
-    case $key in
-        --name) local name="$2"; shift; shift;;
-        --dns) local dns="$2"; shift; shift;;
-        --destination) local destination="$2"; shift; shift;;
-        *) usage; return 1 ;;
-    esac
-    done
+# unregister_service() {
+#     usage() {
+#         echo "register_service [OPTIONS]"
+#         return 1
+#     }
+#     while [[ $# -gt 0 ]]; do
+#     local key="$1"
+#     case $key in
+#         --name) local name="$2"; shift; shift;;
+#         --dns) local dns="$2"; shift; shift;;
+#         --destination) local destination="$2"; shift; shift;;
+#         *) usage; return 1 ;;
+#     esac
+#     done
 
-    if [ -z "$name" ] || [ -z "$dns" ] || [ -z "$destination" ]; then
-        echo "Missing required arguments"
-        usage
-        return 1
-    fi
-    sed -i "/^# BEGIN $name/,/^# END $name/d" "$destination"
-}
+#     if [ -z "$name" ] || [ -z "$dns" ] || [ -z "$destination" ]; then
+#         echo "Missing required arguments"
+#         usage
+#         return 1
+#     fi
+#     sed -i "/^# BEGIN $name/,/^# END $name/d" "$destination"
+# }
 
 register_service() {
     usage() {

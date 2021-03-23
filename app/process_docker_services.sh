@@ -69,17 +69,20 @@ evaluate_state() {
     if [ "$1" = "--force" ]; then
         force=true
     fi
+    local services_state="docker-services.json"
     local current="$(mktemp)"
     local previous="previous-docker-services.json"
     local nginx_conf="$NGINX_HOME/conf.d/default.conf"
 
-    docker_list_services | process_services > "$current"
+    docker_list_services | process_services > "$services_state"
 
-    if [ "$force" = true ] || [ ! -f "$previous" ] || ! diff -q "$current" "$previous" > /dev/null ; then
+    generate_nginx_conf "$services_state" "$current"
+
+    if [ "$force" = true ] || [ ! -f "$nginx_conf" ] || ! diff -q "$nginx_conf" "$current" > /dev/null ; then
         log_info "[SERVICE] Service State Changed. Reloading Nginx State."
-        > "$nginx_conf"
-        generate_nginx_conf "$current" "$nginx_conf"
-        mv "$current" "$previous"
+        # > "$nginx_conf"
+        # generate_nginx_conf "$current" "$nginx_conf"
+        mv "$current" "$nginx_conf"
         reload_nginx
     else
         log_info "[SERVICE] Docker State didn't changed. Skipped"

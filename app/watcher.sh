@@ -15,8 +15,8 @@ function check_docker_socket {
 source functions.sh
 
 while : ; do
-    printf "\n\n##### New Run \n"
-    date
+    printf "\n\n##### New Run: $(date) \n"
+    
     ./process_docker_services.sh
     waitTime=15
     log_info "Waiting $waitTime seconds..."

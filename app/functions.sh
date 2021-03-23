@@ -108,6 +108,102 @@ function get_self_cid {
     fi
 }
 
+function check_cert_min_validity {
+    # Check if a certificate ($1) is still valid for a given amount of time in seconds ($2).
+    # Returns 0 if the certificate is still valid for this amount of time, 1 otherwise.
+    local cert_path="$1"
+    local min_validity="$(( $(date "+%s") + $2 ))"
+
+    local cert_expiration
+    cert_expiration="$(openssl x509 -noout -enddate -in "$cert_path" | cut -d "=" -f 2)"
+    cert_expiration="$(date --utc --date "${cert_expiration% GMT}" "+%s")"
+
+    [[ $cert_expiration -gt $min_validity ]] || return 1
+}
+
+function set_ownership_and_permissions {
+  local path="${1:?}"
+  # The default ownership is root:root, with 755 permissions for folders and 644 for files.
+  local user="${FILES_UID:-root}"
+  local group="${FILES_GID:-$user}"
+  local f_perms="${FILES_PERMS:-644}"
+  local d_perms="${FOLDERS_PERMS:-755}"
+
+  if [[ ! "$f_perms" =~ ^[0-7]{3,4}$ ]]; then
+    echo "Warning : the provided files permission octal ($f_perms) is incorrect. Skipping ownership and permissions check."
+    return 1
+  fi
+  if [[ ! "$d_perms" =~ ^[0-7]{3,4}$ ]]; then
+    echo "Warning : the provided folders permission octal ($d_perms) is incorrect. Skipping ownership and permissions check."
+    return 1
+  fi
+
+  [[ "$(lc $DEBUG)" == true ]] && echo "Debug: checking $path ownership and permissions."
+
+  # Find the user numeric ID if the FILES_UID environment variable isn't numeric.
+  if [[ "$user" =~ ^[0-9]+$ ]]; then
+    user_num="$user"
+  # Check if this user exist inside the container
+  elif id -u "$user" > /dev/null 2>&1; then
+    # Convert the user name to numeric ID
+    local user_num="$(id -u "$user")"
+    [[ "$(lc $DEBUG)" == true ]] && echo "Debug: numeric ID of user $user is $user_num."
+  else
+    echo "Warning: user $user not found in the container, please use a numeric user ID instead of a user name. Skipping ownership and permissions check."
+    return 1
+  fi
+
+  # Find the group numeric ID if the FILES_GID environment variable isn't numeric.
+  if [[ "$group" =~ ^[0-9]+$ ]]; then
+    group_num="$group"
+  # Check if this group exist inside the container
+  elif getent group "$group" > /dev/null 2>&1; then
+    # Convert the group name to numeric ID
+    local group_num="$(getent group "$group" | awk -F ':' '{print $3}')"
+    [[ "$(lc $DEBUG)" == true ]] && echo "Debug: numeric ID of group $group is $group_num."
+  else
+    echo "Warning: group $group not found in the container, please use a numeric group ID instead of a group name. Skipping ownership and permissions check."
+    return 1
+  fi
+
+  # Check and modify ownership if required.
+  if [[ -e "$path" ]]; then
+    if [[ "$(stat -c %u:%g "$path" )" != "$user_num:$group_num" ]]; then
+      [[ "$(lc $DEBUG)" == true ]] && echo "Debug: setting $path ownership to $user:$group."
+      if [[ -L "$path" ]]; then
+        chown -h "$user_num:$group_num" "$path"
+      else
+        chown "$user_num:$group_num" "$path"
+      fi
+    fi
+    # If the path is a folder, check and modify permissions if required.
+    if [[ -d "$path" ]]; then
+      if [[ "$(stat -c %a "$path")" != "$d_perms" ]]; then
+        [[ "$(lc $DEBUG)" == true ]] && echo "Debug: setting $path permissions to $d_perms."
+        chmod "$d_perms" "$path"
+      fi
+    # If the path is a file, check and modify permissions if required.
+    elif [[ -f "$path" ]]; then
+      # Use different permissions for private files (private keys and ACME account files) ...
+      if [[ "$path" =~ ^.*(default\.key|key\.pem|\.json)$ ]]; then
+        if [[ "$(stat -c %a "$path")" != "$f_perms" ]]; then
+          [[ "$(lc $DEBUG)" == true ]] && echo "Debug: setting $path permissions to $f_perms."
+          chmod "$f_perms" "$path"
+        fi
+      # ... and for public files (certificates, chains, fullchains, DH parameters).
+      else
+        if [[ "$(stat -c %a "$path")" != "644" ]]; then
+          [[ "$(lc $DEBUG)" == true ]] && echo "Debug: setting $path permissions to 644."
+          chmod "644" "$path"
+        fi
+      fi
+    fi
+  else
+    echo "Warning: $path does not exist. Skipping ownership and permissions check."
+    return 1
+  fi
+}
+
 function get_nginx_proxy_container {
     local volumes_from
     # First try to get the nginx container ID from the container label.
@@ -147,4 +243,9 @@ function reload_nginx {
             | sed -rn 's/^.*([0-9]{4}\/[0-9]{2}\/[0-9]{2}.*$)/\1/p'
         [[ ${PIPESTATUS[0]} -eq 1 ]] && echo "$(date "+%Y/%m/%d %T"), Error: can't reload nginx-proxy." >&2
     fi
+}
+
+# Convert argument to lowercase (bash 4 only)
+function lc {
+	echo "${@,,}"
 }
