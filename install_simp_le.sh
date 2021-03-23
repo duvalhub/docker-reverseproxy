@@ -5,7 +5,6 @@ build_dependencies="git gcc musl-dev libffi-dev python3-dev openssl-dev"
 apk add --update python3 py3-pip $build_dependencies
 
 # Create expected symlinks if they don't exist
-# [[ -e /usr/bin/pip ]] || ln -sf /usr/bin/pip3 /usr/bin/pip
 [[ -e /usr/bin/python ]] || ln -sf /usr/bin/python3 /usr/bin/python
 
 # Get Let's Encrypt simp_le client source

@@ -19,16 +19,12 @@ RUN apk add --update \
 
 # Install simp_le
 COPY /install_simp_le.sh /app/install_simp_le.sh
-# RUN chmod +rx /app/install_simp_le.sh \
-#     && sync \
-#     && /app/install_simp_le.sh \
-#     && rm -f /app/install_simp_le.sh
-RUN chmod +rx /app/install_simp_le.sh
-RUN sync
-RUN /app/install_simp_le.sh 
-RUN rm -f /app/install_simp_le.sh
-COPY /app/ ${WORKDIR}/
+RUN chmod +rx /app/install_simp_le.sh \
+    && sync \
+    && /app/install_simp_le.sh \
+    && rm -f /app/install_simp_le.sh
 
+COPY /app/ ${WORKDIR}/
 
 ENTRYPOINT ["/bin/bash", "entrypoint.sh"]
 CMD ["/bin/bash", "watcher.sh"]
