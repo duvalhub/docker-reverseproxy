@@ -84,7 +84,6 @@ function labeled_cid {
     docker_api "/containers/json" | jq -r '.[] | select(.Labels["'"$1"'"])|.Id'
 }
 
-
 function get_self_cid {
     local self_cid=""
 
