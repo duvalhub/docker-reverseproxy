@@ -1,6 +1,12 @@
 #!/bin/bash
 # shellcheck disable=SC2155
 
+############################
+# Various
+############################
+development_mode() {
+  [[ "$(lc $DEVELOPMENT)" == true ]]
+}
 
 ############################
 # Logging
@@ -317,7 +323,7 @@ function set_ownership_and_permissions {
   elif id -u "$user" > /dev/null 2>&1; then
     # Convert the user name to numeric ID
     local user_num="$(id -u "$user")"
-    log_debug "numeric ID of user $user is $user_num."
+    # log_debug "numeric ID of user $user is $user_num."
   else
     echo "Warning: user $user not found in the container, please use a numeric user ID instead of a user name. Skipping ownership and permissions check."
     return 1
@@ -330,7 +336,7 @@ function set_ownership_and_permissions {
   elif getent group "$group" > /dev/null 2>&1; then
     # Convert the group name to numeric ID
     local group_num="$(getent group "$group" | awk -F ':' '{print $3}')"
-    log_debug "numeric ID of group $group is $group_num."
+    # log_debug "numeric ID of group $group is $group_num."
   else
     echo "Warning: group $group not found in the container, please use a numeric group ID instead of a group name. Skipping ownership and permissions check."
     return 1

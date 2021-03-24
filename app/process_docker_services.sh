@@ -59,7 +59,6 @@ process_services() {
         log_error "Services data is empty." >&2
         return 1
     fi
-    log_debug "Service State looks like : $(echo "$data" | cut -c1-100)" >&2
     echo "$data" | jq -e -r '.[] | select(.Spec.Labels | has("reverseproxy.host")) | {name: .Spec.Name, host: .Spec.Labels."reverseproxy.host", ssl: .Spec.Labels."reverseproxy.ssl"}' || { 
         log_error "Failed to parse Services state"
         return 1
@@ -82,80 +81,62 @@ process_ssl_services() {
     }
 }
 
-evaluate_state() {
-    log_info "[SERVICE] Evaluation if Nginx Configuration has to be reload..."
-    if [ "$1" = "--force" ]; then
-        force=true
-    fi
+check_service_state() {
     if [ -z "$services_state" ]; then
         log_error "'services_state' variable unset. Fatal error."
         return 1
     fi
-    local service_state_processed="$services_state.processed"
     if [ -f "$services_state" ]; then
         log_debug "Service state file found at '$services_state'"
     else
         log_debug "Service state not found. Generating a fresh one into '$services_state'"
         docker_list_services "$services_state"
-    fi
-    log_debug "Processing Service State to generate Nginx Conf..."
+    fi    
+}
+
+evaluate_state() {
+    log_info "[SERVICE] Evaluation if Nginx Configuration has to be reload..."
+    check_service_state
+    local service_state_processed="$services_state.processed"
+    log_debug "[SERVICE] Processing Service State to generate Nginx Conf..."
     cat "$services_state" | process_services > "$service_state_processed"
-    log_debug "Service state processed and located at '$service_state_processed'. Ready to generate Nginx Configuration..."
+    log_debug "[SERVICE] Service state processed and located at '$service_state_processed'. Ready to generate Nginx Configuration..."
     local current=nginx.conf.new
     local nginx_conf="$NGINX_HOME/conf.d/default.conf"
 
     generate_nginx_conf "$service_state_processed" "$current"
 
-    if [ "$force" = true ] || [ ! -f "$nginx_conf" ] || ! diff -q "$nginx_conf" "$current" > /dev/null ; then
-        log_info "[SERVICE] Service State Changed. Reloading Nginx State."
+    if [ ! -f "$nginx_conf" ] || ! diff -q "$nginx_conf" "$current" > /dev/null ; then
+        log_info "[SERVICE] Nginx Configuration changed. Reloading Nginx..."
         mv "$current" "$nginx_conf"
         reload_nginx
     else
-        log_info "[SERVICE] Nginx Configuration didn't changed. Skipped"
+        log_info "[SERVICE] Nginx Configuration didn't changed. Nginx Reload skipped."
     fi
     rm -f "$current"
 }
 
 evaluate_ssl_state() {
-    if [ -z "$services_state" ]; then
-        log_error "'services_state' variable unset. Fatal error."
-        return 1
-    fi
+    log_info "[SSL] Evaluation if SSL Certificates have to be generate..."
+    check_service_state
     local service_state_processed="$services_state.processed"
-    if [ -f "$services_state" ]; then
-        log_debug "Service state file found at '$services_state'"
-    else
-        log_debug "Service state not found. Generating a fresh one into '$services_state'"
-        docker_list_services "$services_state"
-    fi
-    log_info "[SSL] Evaluation if SSL State Changed..."
-    local current="$(mktemp)"
-    local previous="letsencrypt_service_data.previous"
     local letsencrypt_service_data="letsencrypt_service_data"
-    
-    if [ "$force" = true ] || [ ! -f "$previous" ] || ! diff -q "$current" "$previous" > /dev/null ; then
-        log_info "[SSL] SSL State changed. Reload SSL State."
-        generate_lets_encrypt_service_data "$current" "$letsencrypt_service_data"
-        if [[ "$(lc $development)" == true ]]; then
-            ./letsencrypt_fake.sh "$letsencrypt_service_data"
-        else
-            update_certs
-        fi
-        
-        mv "$current" "$previous"
-        evaluate_state --force
-    else
-        log_info "[SSL] Docker SSL State didn't changed. Skipped"
-    fi
-
-    rm -f "$current"
+    cat "$services_state" | process_ssl_services > "$service_state_processed"
+    generate_lets_encrypt_service_data "$service_state_processed" "$letsencrypt_service_data"
+    local letsencrypt_service="update_certs"
+    "$letsencrypt_service" "$letsencrypt_service_data"
+    evaluate_state
 }
 
 ##########################
 # Begin
 ##########################
-log_info "Retrieving Docker Services State..."
+log_info "Evaluating if Nginx conf has to be reload and/or if SSL Certs has to be generated..."
 services_state="docker-services.json"
-docker_list_services > "$services_state"
-evaluate_state || log_error "We crashed while evaluating state"
-evaluate_ssl_state || log_error "We crashed while evaluating state"
+log_info "Retrieving Docker Service state into '$services_state'..."
+docker_list_services "$services_state"
+log_info "Evaluating Nginx Conf..."
+evaluate_state
+log_info "Evaluating SSL Certs..."
+evaluate_ssl_state
+log_info "Evaluation done succesfully"

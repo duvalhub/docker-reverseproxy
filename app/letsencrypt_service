@@ -88,7 +88,6 @@ function cleanup_links {
     fi
     log_debug "Disabled domains: ${DISABLED_DOMAINS[*]}"
 
-
     # Remove disabled domains symlinks if present.
     # Return 1 if nothing was removed and 0 otherwise.
     if [[ ${#DISABLED_DOMAINS[@]} -gt 0 ]]; then
@@ -244,15 +243,20 @@ function update_certs {
         fi
 
         log_info "Creating/renewal $base_domain certificates... (${hosts_array_expanded[*]})"
-
-        echo "Bro, tu as disables simp_le"
-        echo /usr/bin/simp_le \
-            -f account_key.json -f account_reg.json \
-            -f key.pem -f chain.pem -f fullchain.pem -f cert.pem \
-            $params_d_str \
-            --cert_key_size=$cert_keysize \
-            --server=$acme_ca_uri \
-            --default_root /usr/share/nginx/html/
+        if development_mode; then
+            log_info "Development mode detected. Using self-signed certificates."
+            ln -s ../default.crt fullchain.pem
+            ln -s ../default.key key.pem
+        else
+            echo "Bro, tu as disables simp_le"
+            echo /usr/bin/simp_le \
+                -f account_key.json -f account_reg.json \
+                -f key.pem -f chain.pem -f fullchain.pem -f cert.pem \
+                $params_d_str \
+                --cert_key_size=$cert_keysize \
+                --server=$acme_ca_uri \
+                --default_root /usr/share/nginx/html/
+        fi
 
         simp_le_return=$?
 
