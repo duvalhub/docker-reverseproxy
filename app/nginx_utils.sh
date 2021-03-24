@@ -165,7 +165,7 @@ nginx_write_block() {
     if [ -f "$NGINX_HOME/certs/$dns.crt" ] && [ -f "$NGINX_HOME/certs/$dns.key" ]; then
         ssl=true
     else
-        log_debug "Ssl not detected. "
+        log_debug "Ssl not detected for service $name. "
     fi
     local generator_fct
     if [ "$ssl" = true ]; then
@@ -221,13 +221,14 @@ register_service() {
         usage
         return 1
     fi
+    log_debug "Processing service '$name' ($dns)..."
     nginx_write_block "$name" "$dns" "$destination"
 }
 
 generate_nginx_conf() {
     local services="$1"
     local nginx_conf="$2"
-    cat >> "$nginx_conf" <<-'EOF' 
+    cat > "$nginx_conf" <<-'EOF' 
 
 ##############################
 # Generic Configurations
@@ -236,7 +237,7 @@ EOF
 
     generate_basic_conf >> "$nginx_conf"
 
-    cat <<-'EOF' >> "$nginx_conf"
+    cat >> "$nginx_conf" <<-'EOF'
 
 ##############################
 # Application Configurations
@@ -246,5 +247,5 @@ EOF
     cat "$services" | jq -r '. | [.name,.host] | @tsv' |
     while IFS=$'\t' read -r name host; do
         register_service --name "$name" --dns "$host" --destination "$nginx_conf"
-    done
+    done 
 }

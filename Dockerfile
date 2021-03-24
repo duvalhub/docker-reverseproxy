@@ -2,11 +2,6 @@ FROM alpine:3.12.4
 ARG WORKDIR=/app
 WORKDIR ${WORKDIR}
 
-ENV DEBUG=false \
-    DOCKER_HOST=unix:///var/run/docker.sock \
-    NGINX_HOME=/etc/nginx \
-    DEVELOPMENT=false
-
 # Install packages required by the image
 RUN apk add --update \
         bash \
@@ -24,7 +19,13 @@ RUN chmod +rx /app/install_simp_le.sh \
     && /app/install_simp_le.sh \
     && rm -f /app/install_simp_le.sh
 
+ENV DEBUG=false \
+    DOCKER_HOST=unix:///var/run/docker.sock \
+    NGINX_HOME=/etc/nginx \
+    NGINX_PROXY_LABEL=reverseproxy.nginx \
+    DEVELOPMENT=false
+
 COPY /app/ ${WORKDIR}/
 
 ENTRYPOINT ["/bin/bash", "entrypoint.sh"]
-CMD ["/bin/bash", "watcher.sh"]
+CMD ["/bin/bash", "start.sh"]
