@@ -11,6 +11,14 @@ REUSE_PRIVATE_KEYS="$(lc ${REUSE_PRIVATE_KEYS:-false})"
 MIN_VALIDITY_CAP=7603200
 DEFAULT_MIN_VALIDITY=2592000
 
+pushd () {
+    command pushd "$@" > /dev/null
+}
+
+popd () {
+    command popd "$@" > /dev/null
+}
+
 function create_link {
     local -r source=${1?missing source argument}
     local -r target=${2?missing target argument}
@@ -112,8 +120,8 @@ function cleanup_links {
           done
       done
       return 0
-    else
-      return 1
+    # else
+    #   return 1
     fi
 }
 
@@ -245,8 +253,10 @@ function update_certs {
         log_info "Creating/renewal $base_domain certificates... (${hosts_array_expanded[*]})"
         if development_mode; then
             log_info "Development mode detected. Using self-signed certificates."
-            ln -s ../default.crt fullchain.pem
-            ln -s ../default.key key.pem
+            # touch "${certificate_dir}/.companion"
+            # cp 
+            cp -p ../default.crt fullchain.pem
+            cp -p ../default.key key.pem
         else
             echo "Bro, tu as disables simp_le"
             echo /usr/bin/simp_le \
@@ -259,6 +269,8 @@ function update_certs {
         fi
 
         simp_le_return=$?
+
+        log_debug "simp_le_return = $simp_le_return"
 
         if [[ $REUSE_ACCOUNT_KEYS == true ]]; then
             mkdir -p "$account_dir"

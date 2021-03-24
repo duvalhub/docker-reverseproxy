@@ -121,7 +121,7 @@ evaluate_ssl_state() {
     check_service_state
     local service_state_processed="$services_state.processed"
     local letsencrypt_service_data="letsencrypt_service_data"
-    cat "$services_state" | process_ssl_services > "$service_state_processed"
+    cat "$services_state" | process_ssl_services > "$service_state_processed"
     generate_lets_encrypt_service_data "$service_state_processed" "$letsencrypt_service_data"
     local letsencrypt_service="update_certs"
     "$letsencrypt_service" "$letsencrypt_service_data"
