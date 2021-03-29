@@ -120,8 +120,6 @@ function cleanup_links {
           done
       done
       return 0
-    # else
-    #   return 1
     fi
 }
 
@@ -259,24 +257,18 @@ function update_certs {
             cp -p ../default.key key.pem
             simp_le_return=0
         else
-            # set +e
-            # TODO Il faut pas crash quand simp_le retour >0
-            echo "Got work to dod here "
-            exit 1
-            simp_le_return=$(
-                /usr/bin/simp_le \
+            set +e
+            /usr/bin/simp_le \
                 -f account_key.json -f account_reg.json \
                 -f key.pem -f chain.pem -f fullchain.pem -f cert.pem \
                 $params_d_str \
                 --cert_key_size=$cert_keysize \
                 --server=$acme_ca_uri \
                 --default_root /usr/share/nginx/html/
-            )
+            simp_le_return=$?
+            set -e
+            log_debug "simp_le_return = $simp_le_return"
         fi
-
-        # simp_le_return=$?
-
-        log_debug "simp_le_return = $simp_le_return"
 
         if [[ $REUSE_ACCOUNT_KEYS == true ]]; then
             mkdir -p "$account_dir"
