@@ -259,7 +259,10 @@ function update_certs {
             cp -p ../default.key key.pem
             simp_le_return=0
         else
-            set +e
+            # set +e
+            # TODO Il faut pas crash quand simp_le retour >0
+            echo "Got work to dod here "
+            exit 1
             simp_le_return=$(
                 /usr/bin/simp_le \
                 -f account_key.json -f account_reg.json \
