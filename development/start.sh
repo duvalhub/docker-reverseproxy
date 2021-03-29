@@ -31,5 +31,5 @@ docker build -t "$image" .
 
 docker run --rm --name dgs \
 -v /var/run/docker.sock:/var/run/docker.sock -v $mount_path/conf.d:/etc/nginx/conf.d -v $mount_path/certs:/etc/nginx/certs -v $mount_path/vhost.d:/etc/nginx/vhost.d -v $mount_path/html:/usr/share/nginx/html \
--e DEBUG=true -e DEVELOPMENT=false -e WAIT_TIME=$waitTime -e ACME_CA_URI="https://acme-staging-v02.api.letsencrypt.org/directory" \
+-e DEBUG=true -e DEVELOPMENT=false -e WAIT_TIME=$waitTime -e ACME_CA_URI_BK="https://acme-staging-v02.api.letsencrypt.org/directory" \
 -it "$image"

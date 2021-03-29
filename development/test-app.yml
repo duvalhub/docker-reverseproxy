@@ -20,19 +20,19 @@ services:
     deploy:
       replicas: 4
       labels:
-        reverseproxy.host: "toto2.vps287088.duvalhub.com"
+        reverseproxy.host: "bonjour.vps287088.duvalhub.com"
         reverseproxy.ssl: "true"
     networks:
       - reverseproxy
-  # test-app2:
-  #   image: nginxdemos/hello
-  #   deploy:
-  #     replicas: 2
-  #     labels:
-  #       reverseproxy.host: "toto2.vps287088.duvalhub.com"
-  #       reverseproxy.ssl: "true"
-  #   networks:
-  #     - reverseproxy     
+  test-app3:
+    image: nginxdemos/hello
+    deploy:
+      replicas: 2
+      # labels:
+        # reverseproxy.host: "toto3.vps287088.duvalhub.com"
+        # reverseproxy.ssl: "true"
+    networks:
+      - reverseproxy     
   # test-app3:
   #   image: nginxdemos/hello
   #   deploy:

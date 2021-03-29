@@ -2,6 +2,8 @@ version: "3.8"
 volumes:
   nginx-conf:
   nginx-certs:
+  nginx-vhost:
+  nginx-public:
 
 networks:
   default:
@@ -18,29 +20,34 @@ services:
         constraints:
           - "node.labels.reverseproxy==true"
     labels:
-      - reverseproxy.nginx_proxy
+      - reverseproxy.nginx
     volumes:
       - nginx-conf:/etc/nginx/conf.d
       - nginx-certs:/etc/nginx/certs
+      - nginx-vhost:/etc/nginx/vhost.d
+      - nginx-public:/usr/share/nginx/html
     networks:
       - reverseproxy
-    environment:
-      - DEBUG=true
     ports:
       - 80:80
       - 443:443
   nginx-gen:
-    image: docker-gen-services
+    image: duvalhub/nginx-companion
     deploy:
       replicas: 1
       placement:
         constraints:
           - "node.labels.reverseproxy==true"
-    # networks:
-      # - reverseproxy
+    environment:
+      - WAIT_TIME=300
+      - DEVELOPMENT=true
+      - DEBUG=true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - nginx-conf:/etc/nginx/conf.d
       - nginx-certs:/etc/nginx/certs
+      - nginx-vhost:/etc/nginx/vhost.d
+      - nginx-public:/usr/share/nginx/html
+
 
  
