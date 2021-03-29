@@ -8,6 +8,7 @@ usage() {
     echo "$0 [OPTIONS]"
     return 1
 }
+declare source_only=false
 force=false
 development=false
 while [[ $# -gt 0 ]]; do
@@ -15,6 +16,7 @@ while [[ $# -gt 0 ]]; do
     case $key in
         --force) force="true"; shift;;
         --development) development="true"; shift;;
+        --source-only) source_only="true"; shift;;
         *) usage; exit 1 ;;
     esac
 done
@@ -33,21 +35,45 @@ generate_lets_encrypt_service_data() {
     local services="$1"
     local destination="$2"
     local letsencrypt_services=()
-    while IFS=$'\t' read -r name host; do
-        letsencrypt_services+=( "$(echo "$name" | sed 's/-/_/g');$host" )
-    done < <(cat "$services" | jq -r '. | [.name,.host] | @tsv')
+    for str in $(cat "$services"); do
+        letsencrypt_services+=( "$str" )
+    done
+    # cat "$services"
+    # exit
+    # while IFS=$'\t' read -r str; do
+    #     letsencrypt_services+=( "$str" )
+    # done < <(cat "$services")
+    clean_name() {
+        sed 's/-/_/g'
+    }
 
     echo "LETSENCRYPT_CONTAINERS=(" > "$destination"
     for entry in ${letsencrypt_services[@]}; do
-        local name=$(echo "$entry" | cut -d';' -f1)
+        local name=$(echo "$entry" | cut -d';' -f1 | clean_name)
         printf "\t'$name'\n" >> "$destination"
     done
     echo ")" >> "$destination"
 
+    check() {
+        local -n v=$1
+        [[ "$v" == "null" ]] && v='<no value>' || true
+    }
+
     for entry in ${letsencrypt_services[@]}; do
-        local name=$(echo "$entry" | cut -d';' -f1)
-        local host=$(echo "$entry" | cut -d';' -f2)
-        printf "LETSENCRYPT_"$name"_HOST=('"$host"')\n" >> "$destination"
+        IFS=";" read name host email keysize test_var account_alias restart min_validity <<< "$entry"
+        name=$(echo "$name" | clean_name)
+        check email
+        check keysize
+        check test_var
+        check account_alias
+        check restart
+        check min_validity
+        printf "LETSENCRYPT_"$name"_HOST=( '"$host"' )\n" >> "$destination"
+        printf "LETSENCRYPT_"$name"_EMAIL=\"$email\"\n" >> "$destination"
+        printf "LETSENCRYPT_"$name"_KEYSIZE=\"$test_var\"\n" >> "$destination"
+        printf "LETSENCRYPT_"$name"_ACCOUNT_ALIAS=\"$account_alias\"\n" >> "$destination"
+        printf "LETSENCRYPT_"$name"_RESTART_CONTAINER=\"$restart\"\n" >> "$destination"
+        printf "LETSENCRYPT_"$name"_MIN_VALIDITY=\"$min_validity\"\n" >> "$destination"
     done
 }
 process_services() {
@@ -66,16 +92,7 @@ process_services() {
 }
 
 process_ssl_services() {
-    local data="$1"
-    if [ -z "$data" ]; then
-        read data
-    fi
-    if [[ -z "$data" ]]; then
-        log_error "Services data is empty." >&2
-        return 1
-    fi
-
-    echo "$data" | jq -r '.[] | select(.Spec.Labels | has("reverseproxy.host")) | select(.Spec.Labels | has("reverseproxy.ssl")) | {name: .Spec.Name, host: .Spec.Labels."reverseproxy.host"}' || { 
+    jq -r '.[] | select(.Spec.Labels | has("reverseproxy.host") and has("reverseproxy.ssl")) | {name: .Spec.Name, host: .Spec.Labels."reverseproxy.host", email: .Spec.Labels."reverseproxy.email", key_size: .Spec.Labels."reverseproxy.key_size", test: .Spec.Labels."reverseproxy.test", account_alias: .Spec.Labels."reverseproxy.account_alias", restart: .Spec.Labels."reverseproxy.restart", min_validitiy: .Spec.Labels."reverseproxy.min_validity"} | "\(.name);\(.host);\(.email);\(.key_size);\(.test);\(.account_alias);\(.restart);\(.min_validity)"' || {
         log_error "Failed to parse SSL state" >&2
         return 1
     }
@@ -131,7 +148,12 @@ evaluate_ssl_state() {
 ##########################
 # Begin
 ##########################
-log_info "Evaluating if Nginx conf has to be reload and/or if SSL Certs has to be generated..."
+# Allow the script functions to be sourced without starting the Service Loop.
+if [ "${source_only}" == true ]; then
+  return 0
+fi
+
+log_info "Evaluating if Nginx conf has to be reload and/or  SSL Certs has to be generated..."
 services_state="docker-services.json"
 log_info "Retrieving Docker Service state into '$services_state'..."
 docker_list_services "$services_state"

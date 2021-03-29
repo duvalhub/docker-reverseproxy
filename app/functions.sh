@@ -8,6 +8,10 @@ development_mode() {
   [[ "$(lc $DEVELOPMENT)" == true ]]
 }
 
+is_debug() {
+  [[ "$(lc $DEBUG)" == true ]]
+}
+
 ############################
 # Logging
 ############################

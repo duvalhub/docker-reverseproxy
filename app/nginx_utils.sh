@@ -117,6 +117,7 @@ upstream $dns {
 server {
     server_name $dns;
     listen 80 ;
+    include /etc/nginx/vhost.d/default;
     location / {
         proxy_pass http://$dns;
     }
@@ -137,7 +138,10 @@ server {
     server_name $dns;
     listen 80 ;
     access_log /var/log/nginx/access.log vhost;
-    return 307 https://\$host\$request_uri;
+    include /etc/nginx/vhost.d/default;
+    location / {
+        return 307 https://\$host\$request_uri;
+    }
 }
 server {
     server_name $dns;
@@ -148,7 +152,6 @@ server {
     ssl_session_tickets off;
     ssl_certificate /etc/nginx/certs/$dns.crt;
     ssl_certificate_key /etc/nginx/certs/$dns.key;
-    # include /etc/nginx/vhost.d/default;
     location / {
         proxy_pass http://$dns;
     }

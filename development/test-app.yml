@@ -18,12 +18,12 @@ services:
   test-app2:
     image: nginxdemos/hello
     deploy:
-      replicas: 2
+      replicas: 4
       labels:
         reverseproxy.host: "toto2.vps287088.duvalhub.com"
         reverseproxy.ssl: "true"
     networks:
-      - reverseproxy      
+      - reverseproxy
   # test-app2:
   #   image: nginxdemos/hello
   #   deploy:
