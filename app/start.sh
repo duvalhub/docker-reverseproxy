@@ -18,7 +18,7 @@ usage() {
     return 1
 }
 declare -i last_triggered=$(epoch_seconds)
-declare -i minimum_elasped=${WAIT_TIME:-60}
+declare -i minimum_elasped=${MINIMUM_TIME:-60}
 
 while [[ $# -gt 0 ]]; do
     case "$1" in

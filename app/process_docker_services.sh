@@ -33,28 +33,10 @@ source letsencrypt_service --source-only
 # Functions
 ##########################
 generate_lets_encrypt_service_data() {
-    local services="$1"
-    local destination="$2"
-    local letsencrypt_services=()
-    for str in $(cat "$services"); do
-        letsencrypt_services+=( "$str" )
-    done
-    # cat "$services"
-    # exit
-    # while IFS=$'\t' read -r str; do
-    #     letsencrypt_services+=( "$str" )
-    # done < <(cat "$services")
     clean_name() {
         sed 's/-/_/g'
     }
-
-    echo "LETSENCRYPT_CONTAINERS=(" > "$destination"
-    for entry in ${letsencrypt_services[@]}; do
-        local name=$(echo "$entry" | cut -d';' -f1 | clean_name)
-        printf "\t'$name'\n" >> "$destination"
-    done
-    echo ")" >> "$destination"
-
+    
     check() {
         local -n v=$1
         [[ "$v" == "null" ]] && v='<no value>' || true
@@ -68,6 +50,20 @@ generate_lets_encrypt_service_data() {
         done
         echo "$hosts"
     }
+    
+    local services="$1"
+    local destination="$2"
+    local letsencrypt_services=()
+    for str in $(cat "$services"); do
+        letsencrypt_services+=( "$str" )
+    done
+
+    echo "LETSENCRYPT_CONTAINERS=(" > "$destination"
+    for entry in ${letsencrypt_services[@]}; do
+        local name=$(echo "$entry" | cut -d';' -f1 | clean_name)
+        printf "\t'$name'\n" >> "$destination"
+    done
+    echo ")" >> "$destination"
 
     for entry in ${letsencrypt_services[@]}; do
         IFS=";" read name host email keysize test_var account_alias restart min_validity <<< "$entry"
@@ -143,7 +139,7 @@ evaluate_state() {
     log_info "[SERVICE] Evaluation if Nginx Configuration has to be reload..."
     check_service_state
     local service_state_processed="$services_state.processed"
-    log_debug "[SERVICE] Processing Service State to generate Nginx Conf..."
+    log_info "[SERVICE] Processing Service State to generate Nginx Conf..."
     cat "$services_state" | process_services > "$service_state_processed"
     log_debug "[SERVICE] Service state processed and located at '$service_state_processed'. Ready to generate Nginx Configuration..."
     local current=nginx.conf.new

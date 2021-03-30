@@ -3,6 +3,46 @@
 
 set -ue
 
+#####################
+# Sourcing
+#####################
+source /app/functions.sh
+
+#####################
+# Environments
+#####################
+export MODE="$(lc "${MODE:-prod}")"
+case "$MODE" in
+    dev) 
+        export DEVELOPMENT="true"
+    ;;
+    staging)
+        export ACME_CA_URI="https://acme-staging-v02.api.letsencrypt.org/directory"
+    ;;
+    prod)
+        if [[ -z "$DEFAULT_EMAIL" ]]; then
+            log_warn "It is strongly recommended to set a valid DEFAULT_EMAIL to be notify of expired certificafte by CA."
+        fi
+    ;;
+    *) 
+        echo "mode '$MODE' unknown. Choices are dev (self-signed), stage (staging ca), prod (trusted certificat)" 
+        exit 1 
+    ;;
+esac
+
+export MINIMUM_TIME="$(lc "${MINIMUM_TIME:-60}")"
+export DEBUG="$(lc "${DEBUG:-false}")"
+
+# LetsEncrypt
+export REUSE_ACCOUNT_KEYS="$(lc ${REUSE_ACCOUNT_KEYS:-true})"
+export REUSE_PRIVATE_KEYS="$(lc ${REUSE_PRIVATE_KEYS:-false})"
+
+# Settables
+export DEFAULT_EMAIL
+
+#####################
+# Utils
+#####################
 function check_deprecated_env_var {
     if [[ -n "${ACME_TOS_HASH:-}" ]]; then
         log_info "the ACME_TOS_HASH environment variable is no longer used by simp_le and has been deprecated."
@@ -132,7 +172,9 @@ function check_default_cert_key {
     set_ownership_and_permissions "/etc/nginx/certs/default.crt"
 }
 
-source /app/functions.sh
+#####################
+# Begin
+#####################
 
 if [[ "$*" == "/bin/bash start.sh" ]]; then
     acmev1_r='acme-(v01\|staging)\.api\.letsencrypt\.org'

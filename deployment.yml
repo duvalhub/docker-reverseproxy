@@ -39,9 +39,8 @@ services:
         constraints:
           - "node.labels.reverseproxy==true"
     environment:
-      - DEVELOPMENT=true
-      # - ACME_CA_URI=https://acme-staging-v02.api.letsencrypt.org/directory
-      - DEBUG=true
+      - MODE=${MODE}
+      - DEBUG=${DEBUG}
       - DEFAULT_EMAIL=${EMAIL}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
