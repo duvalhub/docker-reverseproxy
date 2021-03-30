@@ -40,7 +40,8 @@ services:
           - "node.labels.reverseproxy==true"
     environment:
       - WAIT_TIME=300
-      - DEVELOPMENT=true
+      - DEVELOPMENT=false
+      # - ACME_CA_URI=https://acme-staging-v02.api.letsencrypt.org/directory
       - DEBUG=true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

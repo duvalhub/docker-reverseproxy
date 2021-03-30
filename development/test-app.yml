@@ -33,24 +33,24 @@ services:
         # reverseproxy.ssl: "true"
     networks:
       - reverseproxy     
-  # test-app3:
-  #   image: nginxdemos/hello
-  #   deploy:
-  #     replicas: 2
-  #     labels:
-  #       reverseproxy.host: "toto3.vps287088.duvalhub.com"
-  #       reverseproxy.ssl: "true"
-  #   networks:
-  #     - reverseproxy
-  # test-app4:
-  #   image: nginxdemos/hello
-  #   deploy:
-  #     replicas: 2
-  #     labels:
-  #       reverseproxy.host: "toto4.vps287088.duvalhub.com"
-  #       # reverseproxy.ssl: "true"
-  #   networks:
-  #     - reverseproxy
+  test-app4:
+    image: nginxdemos/hello
+    deploy:
+      replicas: 2
+      # labels:
+        # reverseproxy.host: "toto3.vps287088.duvalhub.com"
+        # reverseproxy.ssl: "true"
+    networks:
+      - reverseproxy
+  test-app5:
+    image: nginxdemos/hello
+    deploy:
+      replicas: 2
+      labels:
+        reverseproxy.host: "toto5.vps287088.duvalhub.com"
+        # reverseproxy.ssl: "true"
+    networks:
+      - reverseproxy
 #  test-app5:
 #     image: nginxdemos/hello
 #     deploy:

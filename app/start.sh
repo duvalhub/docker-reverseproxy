@@ -22,9 +22,31 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-while : ; do
-    log_info "Launching a new run of processing Docker Services every $waitTime seconds..."
-    ./process_docker_services.sh
-    log_info "Waiting $waitTime seconds..."
-    sleep "$waitTime"
+log_debug "Starting process_docker_services..."
+
+
+./process_docker_services.sh &
+process_docker_services_pid=$!
+
+log_debug "process_docker_services running on id '$process_docker_services_pid'"
+
+docker events --filter type=service | while read event
+do
+    log_info "Events detected. Killing process_docker_services '$process_docker_services_pid'..."
+    log_debug "Event: $event"
+    kill -1 "$process_docker_services_pid"
 done
+
+
+# wait "indefinitely"
+# while [[ -e /proc/$docker_gen_pid ]]; do
+#     wait $docker_gen_pid # Wait for any signals or end of execution of docker-gen
+# done
+
+
+# while : ; do
+#     log_info "Launching a new run of processing Docker Services every $waitTime seconds..."
+#     ./process_docker_services.sh
+#     log_info "Waiting $waitTime seconds..."
+#     sleep "$waitTime"
+# done

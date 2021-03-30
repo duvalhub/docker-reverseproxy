@@ -9,6 +9,7 @@ usage() {
     return 1
 }
 declare source_only=false
+declare -ri waitTime=${WAIT_TIME:-15}
 force=false
 development=false
 while [[ $# -gt 0 ]]; do
@@ -153,6 +154,21 @@ if [ "${source_only}" == true ]; then
   return 0
 fi
 
+
+pid=
+# Service Loop: When this script exits, start it again.
+_trap() {
+    log_debug "Trap EXIT signal"
+    [[ $pid ]] && kill $pid
+    exec $0
+}
+_exit() {
+    log_info "Received 'INT TERM' signal. This is the end."
+    trap - EXIT
+}
+trap _trap EXIT
+trap _exit INT TERM
+
 log_info "Evaluating if Nginx conf has to be reload and/or  SSL Certs has to be generated..."
 services_state="docker-services.json"
 log_info "Retrieving Docker Service state into '$services_state'..."
@@ -162,3 +178,9 @@ evaluate_state
 log_info "Evaluating SSL Certs..."
 evaluate_ssl_state
 log_info "Evaluation done succesfully"
+
+# Wait some amount of time
+echo "Sleep for ${seconds_to_wait}s"
+sleep $seconds_to_wait & pid=$!
+wait
+pid=
