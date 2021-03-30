@@ -10,7 +10,6 @@ RUN apk add --update \
         curl \
         jq \
         openssl \
-        docker \
     && rm /var/cache/apk/*
 
 # Install simp_le
@@ -20,6 +19,11 @@ RUN chmod +rx /app/install_simp_le.sh \
     && /app/install_simp_le.sh \
     && rm -f /app/install_simp_le.sh
 
+# Install simp_le
+COPY /install_docker.sh ./install_docker.sh
+RUN chmod +rx install_docker.sh \
+    && ./install_docker.sh \
+    && rm -f /app/install_docker.sh
 # Install Docker CLI
 # COPY /install_simp_le.sh /app/install_simp_le.sh
 # RUN chmod +rx /app/install_simp_le.sh \
@@ -34,6 +38,7 @@ ENV DEBUG=false \
     DEVELOPMENT=false
 
 COPY /app/ ${WORKDIR}/
+# COPY /todelete/docker /usr/bin/docker
 
 ENTRYPOINT ["/bin/bash", "entrypoint.sh"]
 CMD ["/bin/bash", "start.sh"]
