@@ -1,7 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC2155
 
-set -ue
+set -u
 
 #####################
 # Sourcing

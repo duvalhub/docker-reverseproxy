@@ -1,5 +1,4 @@
 #!/bin/bash 
-set -e
 
 ##########################
 # Parameters
@@ -182,7 +181,7 @@ fi
 pid=
 # Service Loop: When this script exits, start it again.
 _trap() {
-    log_debug "[DockerService] Trap EXIT signal"
+    log_info "[DockerService] Trap EXIT signal"
     [[ $pid ]] && kill $pid
     exec $0
 }
@@ -193,6 +192,11 @@ _exit() {
 trap _trap EXIT
 trap _exit INT TERM
 
+log_debug "##############################################################"
+log_debug "##############################################################"
+log_debug "# SCRIPT START"
+log_debug "##############################################################"
+log_debug "##############################################################"
 log_info "Evaluating if Nginx conf has to be reload and/or  SSL Certs has to be generated..."
 services_state="docker-services.json"
 log_info "Retrieving Docker Service state into '$services_state'..."

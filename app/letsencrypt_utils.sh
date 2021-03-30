@@ -121,7 +121,8 @@ function cleanup_links {
       done
       return 0
     else
-        return 1
+      log_debug "There are no domains disabled."
+      return 1
     fi
 }
 
@@ -259,7 +260,6 @@ function update_certs {
             cp -p ../default.key key.pem
             simp_le_return=0
         else
-            set +e
             /usr/bin/simp_le \
                 -f account_key.json -f account_reg.json \
                 -f key.pem -f chain.pem -f fullchain.pem -f cert.pem \
@@ -268,7 +268,6 @@ function update_certs {
                 --server=$acme_ca_uri \
                 --default_root /usr/share/nginx/html/
             simp_le_return=$?
-            set -e
             log_debug "simp_le_return = $simp_le_return"
         fi
 
@@ -329,6 +328,6 @@ function update_certs {
     done
 
     cleanup_links && should_reload_nginx='true' || true
-
+    
     [[ "$should_reload_nginx" == 'true' ]] && reload_nginx
 }
