@@ -11,6 +11,8 @@ source /app/functions.sh
 #####################
 # Environments
 #####################
+export DOCKER_HOST="$(lc "${DOCKER_HOST:-"unix:///var/run/docker.sock"}")"
+export NGINX_PROXY_LABEL="$(lc "${NGINX_PROXY_LABEL:-"reverseproxy.nginx"}")"
 export MODE="$(lc "${MODE:-prod}")"
 case "$MODE" in
     dev) 
@@ -39,6 +41,9 @@ export REUSE_PRIVATE_KEYS="$(lc ${REUSE_PRIVATE_KEYS:-false})"
 
 # Settables
 export DEFAULT_EMAIL
+
+# Can't touch. Legacy
+export NGINX_HOME="/etc/nginx"
 
 #####################
 # Utils

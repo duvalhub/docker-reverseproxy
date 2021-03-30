@@ -25,14 +25,7 @@ RUN chmod +rx install_docker.sh \
     && ./install_docker.sh \
     && rm -f /app/install_docker.sh
 
-ENV DEBUG=false \
-    DOCKER_HOST=unix:///var/run/docker.sock \
-    NGINX_HOME=/etc/nginx \
-    NGINX_PROXY_LABEL=reverseproxy.nginx \
-    DEVELOPMENT=false
-
 COPY /app/ ${WORKDIR}/
-# COPY /todelete/docker /usr/bin/docker
 
 ENTRYPOINT ["/bin/bash", "entrypoint.sh"]
 CMD ["/bin/bash", "start.sh"]
