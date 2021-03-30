@@ -86,14 +86,31 @@ process_services() {
         log_error "Services data is empty." >&2
         return 1
     fi
-    echo "$data" | jq -e -r '.[] | select(.Spec.Labels | has("reverseproxy.host")) | {name: .Spec.Name, host: .Spec.Labels."reverseproxy.host", ssl: .Spec.Labels."reverseproxy.ssl"}' || { 
+    echo "$data" | jq -e -r '.[] | select(.Spec.Labels | has("reverseproxy.host")) | 
+    {
+        name: .Spec.Name, 
+        host: .Spec.Labels."reverseproxy.host", 
+        ssl: .Spec.Labels."reverseproxy.ssl", 
+        port: .Spec.Labels."reverseproxy.port"
+    }' || { 
         log_error "Failed to parse Services state"
         return 1
     }
 }
 
 process_ssl_services() {
-    jq -r '.[] | select(.Spec.Labels | has("reverseproxy.host") and has("reverseproxy.ssl")) | {name: .Spec.Name, host: .Spec.Labels."reverseproxy.host", email: .Spec.Labels."reverseproxy.email", key_size: .Spec.Labels."reverseproxy.key_size", test: .Spec.Labels."reverseproxy.test", account_alias: .Spec.Labels."reverseproxy.account_alias", restart: .Spec.Labels."reverseproxy.restart", min_validitiy: .Spec.Labels."reverseproxy.min_validity"} | "\(.name);\(.host);\(.email);\(.key_size);\(.test);\(.account_alias);\(.restart);\(.min_validity)"' || {
+    jq -r '.[] | select(.Spec.Labels | has("reverseproxy.host") and has("reverseproxy.ssl")) 
+    | {
+        name: .Spec.Name, 
+        host: .Spec.Labels."reverseproxy.host", 
+        email: .Spec.Labels."reverseproxy.email", 
+        key_size: .Spec.Labels."reverseproxy.key_size", 
+        test: .Spec.Labels."reverseproxy.test", 
+        account_alias: .Spec.Labels."reverseproxy.account_alias", 
+        restart: .Spec.Labels."reverseproxy.restart", 
+        min_validitiy: .Spec.Labels."reverseproxy.min_validity"
+    } | .host |= (. as $id | sub(" "; $id[0:1])
+    | "\(.name);\(.host);\(.email);\(.key_size);\(.test);\(.account_alias);\(.restart);\(.min_validity)"' || {
         log_error "Failed to parse SSL state" >&2
         return 1
     }

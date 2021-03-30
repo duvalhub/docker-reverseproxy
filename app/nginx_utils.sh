@@ -33,9 +33,9 @@ log_format vhost '$host $remote_addr - $remote_user [$time_local] '
                  '"$request" $status $body_bytes_sent '
                  '"$http_referer" "$http_user_agent"';
 access_log off;
-		ssl_protocols TLSv1.2 TLSv1.3;
-		ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384';
-		ssl_prefer_server_ciphers off;
+ssl_protocols TLSv1.2 TLSv1.3;
+ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384';
+ssl_prefer_server_ciphers off;
 # HTTP 1.1 support
 proxy_http_version 1.1;
 proxy_buffering off;
@@ -68,12 +68,6 @@ generate_basic_https_conf() {
     cat <<-'EOF'
 server {
     server_name _; # This is just an invalid value which will never trigger on a real hostname.
-    listen 80;
-    access_log /var/log/nginx/access.log vhost;
-    return 503;
-}
-server {
-    server_name _; # This is just an invalid value which will never trigger on a real hostname.
     listen 443 ssl http2;
     access_log /var/log/nginx/access.log vhost;
     return 503;
@@ -88,38 +82,35 @@ EOF
 
 generate_basic_conf() {
     generate_basic_nginx_conf
-     if [ -f "$NGINX_HOME/certs/default.crt" ] && [ -f "$NGINX_HOME/certs/default.key" ]; then
-        ssl=true
-    fi
-    local generator_fct
-    if [ "$ssl" = true ]; then
-        generator_fct=generate_basic_https_conf
-    else
-        generator_fct=generate_basic_http_conf
-    fi
     cat <<-'EOF'
 
 ##############################
 # Generic Server Configurations
 ##############################
 EOF
-    "$generator_fct"
+    generate_basic_http_conf
+     if [ -f "$NGINX_HOME/certs/default.crt" ] && [ -f "$NGINX_HOME/certs/default.key" ]; then
+        generate_basic_https_conf
+    fi
 }
 
 nginx_write_http_block() {
-    local name="$1"
-    local dns="$2"
+    local -a params=("$@")
+    local -r name="${params[0]?Missing NAME as second param}"
+    local -r dns="${params[1]?Missing DNS as second param}"
+    local -r base_domain="$(echo "$dns" | cut -d' ' -f1)"
+    local -i port="${params[2]:-80}"
     cat <<-EOF
 # BEGIN $name
-upstream $dns {
-    server $name:80;
+upstream $base_domain {
+    server $name:$port;
 }
 server {
     server_name $dns;
     listen 80 ;
     include /etc/nginx/vhost.d/default;
     location / {
-        proxy_pass http://$dns;
+        proxy_pass http://$base_domain;
     }
 }
 # END $name
@@ -127,12 +118,15 @@ EOF
 }
 
 nginx_write_https_block() {
-    local name="$1"
-    local dns="$2"
+    local -a params=("$@")
+    local -r name="${params[0]?Missing NAME as second param}"
+    local -r dns="${params[1]?Missing DNS as second param}"
+    local -r base_domain="$(echo "$dns" | cut -d' ' -f1)"
+    local -i port="${params[2]:-80}"
     cat <<-EOF
 # BEGIN $name
-upstream $dns {
-    server $name:80;
+upstream $base_domain {
+    server $name:$port;
 }
 server {
     server_name $dns;
@@ -153,7 +147,7 @@ server {
     ssl_certificate /etc/nginx/certs/$dns.crt;
     ssl_certificate_key /etc/nginx/certs/$dns.key;
     location / {
-        proxy_pass http://$dns;
+        proxy_pass http://$base_domain;
     }
 }
 # END $name
@@ -161,25 +155,29 @@ EOF
 }
 
 nginx_write_block() {
-    local name="$1"
-    local dns="$2"
-    local destination="$3"
+    local -a params=("$@")
+    local -r destination="${params[-1]}"
+    local -r name="${params[0]?Missing NAME as second param}"
+    local -r dns="${params[1]?Missing DNS as second param}"
+    local -r base_domain="$(echo "$dns" | cut -d' ' -f1)"
+    local -r port="${params[2]:-80}"
+    unset params[-1]
     local ssl=false
-    if [ -f "$NGINX_HOME/certs/$dns.crt" ] && [ -f "$NGINX_HOME/certs/$dns.key" ]; then
+    if [ -f "$NGINX_HOME/certs/$base_domain.crt" ] && [ -f "$NGINX_HOME/certs/$base_domain.key" ]; then
         ssl=true
     else
         log_debug "Ssl not detected for service $name. "
     fi
     local generator_fct
     if [ "$ssl" = true ]; then
-        log_debug "Registering $name with $dns with ssl"
+        log_debug "Registering $name:$port ($dns) with ssl"
         generator_fct=nginx_write_https_block
     else
-        log_debug "Registering $name with $dns, no ssl."
+        log_debug "Registering $name:$port ($dns) without ssl."
         generator_fct=nginx_write_http_block
     fi
-
-    "$generator_fct" "$name" "$dns" >> "$destination"
+    
+    "$generator_fct" "${params[@]}" >> "$destination"
 }
 # unregister_service() {
 #     usage() {
@@ -214,6 +212,7 @@ register_service() {
     case $key in
         --name) local name="$2"; shift; shift;;
         --dns) local dns="$2"; shift; shift;;
+        --port) local port="${2:-80}"; shift; shift;;
         --destination) local destination="$2"; shift; shift;;
         *) usage; return 1 ;;
     esac
@@ -224,8 +223,8 @@ register_service() {
         usage
         return 1
     fi
-    log_debug "Processing service '$name' ($dns)..."
-    nginx_write_block "$name" "$dns" "$destination"
+    log_debug "Processing service '$name:$port' ($dns)..."
+    nginx_write_block "$name" "$dns" "$port" "$destination"
 }
 
 generate_nginx_conf() {
@@ -247,8 +246,8 @@ EOF
 ##############################
 EOF
 
-    cat "$services" | jq -r '. | [.name,.host] | @tsv' |
-    while IFS=$'\t' read -r name host; do
-        register_service --name "$name" --dns "$host" --destination "$nginx_conf"
+    cat "$services" | jq -r '. | [.name,.host,.port] | @tsv' |
+    while IFS=$'\t' read -r name host port; do
+        register_service --name "$name" --dns "$host" --port "$port" --destination "$nginx_conf"
     done 
 }

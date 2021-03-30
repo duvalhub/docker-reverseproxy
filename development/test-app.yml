@@ -18,9 +18,9 @@ services:
   test-app2:
     image: nginxdemos/hello
     deploy:
-      replicas: 4
+      replicas: 1
       labels:
-        reverseproxy.host: "bonjour.vps287088.duvalhub.com"
+        reverseproxy.host: "bonjour.vps287088.duvalhub.com bonjour2.vps287088.duvalhub.com"
         reverseproxy.ssl: "true"
     networks:
       - reverseproxy
