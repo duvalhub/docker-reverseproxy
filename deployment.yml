@@ -32,7 +32,7 @@ services:
       - 80:80
       - 443:443
   nginx-companion:
-    image: duvalhub/nginx-companion
+    image: duvalhub/nginx-companion:${NGINX_COMPANION_VERSION}
     deploy:
       replicas: 1
       placement:

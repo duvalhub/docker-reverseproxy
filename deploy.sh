@@ -5,11 +5,13 @@ declare deployment_file="deployment.yml"
 declare deployment_name="reverseproxy"
 export MODE=prod
 export DEBUG=false
+export NGINX_COMPANION_VERSION=latest
 while [[ $# -gt 0 ]]; do
 case "$1" in
     --email) export EMAIL="$2"; shift;;
     --mode) MODE="$2"; shift;;
     --debug) DEBUG="true" ;;
+    --version) NGINX_COMPANION_VERSION="$2"; shift ;;
     --stack-name) deployment_name="$2"; shift ;;
     -f|--file) deployment_file="$2"; shift ;;
     *) 

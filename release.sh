@@ -2,7 +2,7 @@
 set -e
 
 declare -r version="${1:-latest}"
-declare -r image="duvalhub/nginx-companion:latest"
+declare -r image="duvalhub/nginx-companion:$version"
 
 if [[ "$version" != "latest" && ! -z "$(git status --porcelain)" ]]; then 
   echo "Working directory not clean. Commit before release"
