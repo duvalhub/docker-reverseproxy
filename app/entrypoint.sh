@@ -20,7 +20,7 @@ case "$MODE" in
         export ACME_CA_URI="https://acme-staging-v02.api.letsencrypt.org/directory"
     ;;
     prod)
-        if [[ -z "$DEFAULT_EMAIL" ]]; then
+        if [[ -z "$DEFAULT_EMAIL" ]]; then
             log_warn "It is strongly recommended to set a valid DEFAULT_EMAIL to be notify of expired certificafte by CA."
         fi
     ;;

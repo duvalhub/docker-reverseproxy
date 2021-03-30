@@ -13,7 +13,7 @@ networks:
 
 services:
   nginx:
-    image: nginx
+    image: nginx:alpine
     deploy:
       replicas: 1
       placement:
@@ -31,8 +31,10 @@ services:
     ports:
       - 80:80
       - 443:443
-  nginx-gen:
+  nginx-companion:
     image: duvalhub/nginx-companion
+    # entrypoint: bash
+    # command: -c "sleep infinity"
     deploy:
       replicas: 1
       placement:
