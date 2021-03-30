@@ -16,8 +16,13 @@ is_debug() {
 # Logging
 ############################
 log() {
+    local pad=$(printf '%0.1s' " "{1..60})
     local level="$1"
-    echo "$(date '+%Y-%m-%d %H:%M:%S') [$level] - $2"
+    local header="$(date '+%Y-%m-%d %H:%M:%S.%s') [$level]"
+    local padlength=38
+    printf '%s' "$header"
+    printf '%*.*s' 0 $((padlength - ${#header} )) "$pad"
+    printf " - $2\n"
 }
 
 log_info() {
@@ -25,7 +30,7 @@ log_info() {
 }
 
 log_warn() {
-    log "WARNING" "$@"
+    log "WARN" "$@"
 }
 
 log_error() {

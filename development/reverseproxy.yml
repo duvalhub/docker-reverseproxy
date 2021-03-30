@@ -39,16 +39,13 @@ services:
         constraints:
           - "node.labels.reverseproxy==true"
     environment:
-      - WAIT_TIME=300
-      - DEVELOPMENT=false
+      - DEVELOPMENT=true
       # - ACME_CA_URI=https://acme-staging-v02.api.letsencrypt.org/directory
       - DEBUG=true
+      - DEFAULT_EMAIL=${EMAIL}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - nginx-conf:/etc/nginx/conf.d
       - nginx-certs:/etc/nginx/certs
       - nginx-vhost:/etc/nginx/vhost.d
       - nginx-public:/usr/share/nginx/html
-
-w
- 

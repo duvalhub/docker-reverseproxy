@@ -181,16 +181,15 @@ if [ "${source_only}" == true ]; then
   return 0
 fi
 
-
 pid=
 # Service Loop: When this script exits, start it again.
 _trap() {
-    log_debug "Trap EXIT signal"
+    log_debug "[DockerService] Trap EXIT signal"
     [[ $pid ]] && kill $pid
     exec $0
 }
 _exit() {
-    log_info "Received 'INT TERM' signal. This is the end."
+    log_info "[DockerService] Received 'INT TERM' signal. This is the end."
     trap - EXIT
 }
 trap _trap EXIT
@@ -207,7 +206,7 @@ evaluate_ssl_state
 log_info "Evaluation done succesfully"
 
 # Wait some amount of time
-echo "Sleep for ${seconds_to_wait}s"
+log_info "Sleep for ${seconds_to_wait}s"
 sleep $seconds_to_wait & pid=$!
 wait
 pid=
