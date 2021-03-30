@@ -33,8 +33,6 @@ services:
       - 443:443
   nginx-companion:
     image: duvalhub/nginx-companion
-    # entrypoint: bash
-    # command: -c "sleep infinity"
     deploy:
       replicas: 1
       placement:

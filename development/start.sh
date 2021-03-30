@@ -1,5 +1,5 @@
 #!/bin/bash
-# cd ~/workspace/duvalhub/docker-reverseproxy && sudo bash development/start.sh --fresh-start --development
+# bash development/start.sh --fresh-start --development
 
 set -e
 declare -r nginx_name="nginx"
