@@ -19,17 +19,11 @@ RUN chmod +rx /app/install_simp_le.sh \
     && /app/install_simp_le.sh \
     && rm -f /app/install_simp_le.sh
 
-# Install simp_le
+# Install Docker CLI
 COPY /install_docker.sh ./install_docker.sh
 RUN chmod +rx install_docker.sh \
     && ./install_docker.sh \
     && rm -f /app/install_docker.sh
-# Install Docker CLI
-# COPY /install_simp_le.sh /app/install_simp_le.sh
-# RUN chmod +rx /app/install_simp_le.sh \
-#     && sync \
-#     && /app/install_simp_le.sh \
-#     && rm -f /app/install_simp_le.sh
 
 ENV DEBUG=false \
     DOCKER_HOST=unix:///var/run/docker.sock \
