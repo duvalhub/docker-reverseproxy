@@ -27,7 +27,7 @@ case "$MODE" in
         fi
     ;;
     *) 
-        echo "mode '$MODE' unknown. Choices are dev (self-signed), stage (staging ca), prod (trusted certificat)" 
+        log_error "mode '$MODE' unknown. Choices are dev (self-signed), stage (staging ca), prod (trusted certificat)" 
         exit 1 
     ;;
 esac
@@ -50,8 +50,8 @@ export NGINX_HOME="/etc/nginx"
 #####################
 function check_deprecated_env_var {
     if [[ -n "${ACME_TOS_HASH:-}" ]]; then
-        log_info "the ACME_TOS_HASH environment variable is no longer used by simp_le and has been deprecated."
-        echo "simp_le now implicitly agree to the ACME CA ToS."
+        log_warn "the ACME_TOS_HASH environment variable is no longer used by simp_le and has been deprecated."
+        log_warn "simp_le now implicitly agree to the ACME CA ToS."
     fi
 }
 
@@ -59,8 +59,8 @@ function check_docker_socket {
     if [[ $DOCKER_HOST == unix://* ]]; then
         socket_file=${DOCKER_HOST#unix://}
         if [[ ! -S $socket_file ]]; then
-            echo "Error: you need to share your Docker host socket with a volume at $socket_file" >&2
-            echo "Typically you should run your container with: '-v /var/run/docker.sock:$socket_file:ro'" >&2
+            log_error "Error: you need to share your Docker host socket with a volume at $socket_file" >&2
+            log_error "Typically you should run your container with: '-v /var/run/docker.sock:$socket_file:ro'" >&2
             exit 1
         fi
     fi
@@ -72,17 +72,17 @@ function check_writable_directory {
         docker_api "/containers/$(get_self_cid)/json" | jq ".Mounts[].Destination" | grep -q "^\"$dir\"$"
         [[ $? -ne 0 ]] && echo "Warning: '$dir' does not appear to be a mounted volume."
     else
-        echo "Warning: can't check if '$dir' is a mounted volume without self container ID."
+        log_warn "Warning: can't check if '$dir' is a mounted volume without self container ID."
     fi
     if [[ ! -d "$dir" ]]; then
-        echo "Error: can't access to '$dir' directory !" >&2
-        echo "Check that '$dir' directory is declared as a writable volume." >&2
+        log_error "Error: can't access to '$dir' directory !" >&2
+        log_error "Check that '$dir' directory is declared as a writable volume." >&2
         exit 1
     fi
     touch $dir/.check_writable 2>/dev/null
     if [[ $? -ne 0 ]]; then
-        echo "Error: can't write to the '$dir' directory !" >&2
-        echo "Check that '$dir' directory is export as a writable volume." >&2
+        log_error "Error: can't write to the '$dir' directory !" >&2
+        log_error "Check that '$dir' directory is export as a writable volume." >&2
         exit 1
     fi
     rm -f $dir/.check_writable
@@ -94,7 +94,7 @@ function check_dh_group {
     local DHPARAM_BITS="${DHPARAM_BITS:-2048}"
     re='^[0-9]*$'
     if ! [[ "$DHPARAM_BITS" =~ $re ]] ; then
-       echo "Error: invalid Diffie-Hellman size of $DHPARAM_BITS !" >&2
+       log_error "Error: invalid Diffie-Hellman size of $DHPARAM_BITS !" >&2
        exit 1
     fi
 
@@ -121,7 +121,7 @@ function check_dh_group {
     fi
 
     log_info "Creating Diffie-Hellman group in the background."
-    echo "A pre-generated Diffie-Hellman group will be used for now while the new one
+    log_info "A pre-generated Diffie-Hellman group will be used for now while the new one
 is being created."
 
     # Put the default dhparam file in place so we can start immediately
@@ -184,16 +184,16 @@ function check_default_cert_key {
 if [[ "$*" == "/bin/bash start.sh" ]]; then
     acmev1_r='acme-(v01\|staging)\.api\.letsencrypt\.org'
     if [[ "${ACME_CA_URI:-}" =~ $acmev1_r ]]; then
-        echo "Error: the ACME v1 API is no longer supported by simp_le."
-        echo "See https://github.com/zenhack/simp_le/pull/119"
-        echo "Please use one of Let's Encrypt ACME v2 endpoints instead."
+        log_error "Error: the ACME v1 API is no longer supported by simp_le."
+        log_error "See https://github.com/zenhack/simp_le/pull/119"
+        log_error "Please use one of Let's Encrypt ACME v2 endpoints instead."
         exit 1
     fi
     check_docker_socket
     if [[ -z "$(get_nginx_proxy_container)" ]]; then
-        echo "Error: can't get nginx-proxy container ID !" >&2
-        echo "Check that you have set the following :" >&2
-        echo -e "\t- Label the nginx-proxy container to use with '$NGINX_PROXY_LABEL'." >&2
+        log_error "Error: can't get nginx-proxy container ID !" >&2
+        log_error "Check that you have set the following :" >&2
+        log_error -e "\t- Label the nginx-proxy container to use with '$NGINX_PROXY_LABEL'." >&2
         exit 1
     fi
     check_writable_directory "/etc/nginx/conf.d"
