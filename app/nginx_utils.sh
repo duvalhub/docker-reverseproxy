@@ -134,7 +134,7 @@ server {
     access_log /var/log/nginx/access.log vhost;
     include /etc/nginx/vhost.d/default;
     location / {
-        return 307 https://\$host\$request_uri;
+        return 301 https://\$host\$request_uri;
     }
 }
 server {
@@ -179,28 +179,6 @@ nginx_write_block() {
     
     "$generator_fct" "${params[@]}" >> "$destination"
 }
-# unregister_service() {
-#     usage() {
-#         echo "register_service [OPTIONS]"
-#         return 1
-#     }
-#     while [[ $# -gt 0 ]]; do
-#     local key="$1"
-#     case $key in
-#         --name) local name="$2"; shift; shift;;
-#         --dns) local dns="$2"; shift; shift;;
-#         --destination) local destination="$2"; shift; shift;;
-#         *) usage; return 1 ;;
-#     esac
-#     done
-
-#     if [ -z "$name" ] || [ -z "$dns" ] || [ -z "$destination" ]; then
-#         echo "Missing required arguments"
-#         usage
-#         return 1
-#     fi
-#     sed -i "/^# BEGIN $name/,/^# END $name/d" "$destination"
-# }
 
 register_service() {
     usage() {
