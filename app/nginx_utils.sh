@@ -144,8 +144,8 @@ server {
     ssl_session_timeout 5m;
     ssl_session_cache shared:SSL:50m;
     ssl_session_tickets off;
-    ssl_certificate /etc/nginx/certs/$dns.crt;
-    ssl_certificate_key /etc/nginx/certs/$dns.key;
+    ssl_certificate /etc/nginx/certs/$base_domain.crt;
+    ssl_certificate_key /etc/nginx/certs/$base_domain.key;
     location / {
         proxy_pass http://$base_domain;
     }
@@ -166,14 +166,14 @@ nginx_write_block() {
     if [ -f "$NGINX_HOME/certs/$base_domain.crt" ] && [ -f "$NGINX_HOME/certs/$base_domain.key" ]; then
         ssl=true
     else
-        log_debug "Ssl not detected for service $name. "
+        log_debug "[SERVICE][$name] Ssl not detected for service $name. "
     fi
     local generator_fct
     if [ "$ssl" = true ]; then
-        log_debug "Registering $name:$port ($dns) with ssl"
+        log_debug "[SERVICE][$name][HTTPS] Registering $name:$port ($dns) with ssl"
         generator_fct=nginx_write_https_block
     else
-        log_debug "Registering $name:$port ($dns) without ssl."
+        log_debug "[SERVICE][$name][HTTP] Registering $name:$port ($dns) without ssl."
         generator_fct=nginx_write_http_block
     fi
     
@@ -223,7 +223,7 @@ register_service() {
         usage
         return 1
     fi
-    log_debug "Processing service '$name:$port' ($dns)..."
+    log_debug "[SERVICE][$name] Processing service '$name:$port' ($dns)..."
     nginx_write_block "$name" "$dns" "$port" "$destination"
 }
 

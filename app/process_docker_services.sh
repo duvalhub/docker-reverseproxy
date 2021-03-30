@@ -60,21 +60,31 @@ generate_lets_encrypt_service_data() {
         [[ "$v" == "null" ]] && v='<no value>' || true
     }
 
+    parse_host() {
+        IFS='|' read -ra host_arr <<< "${1?Hosts not passed in. Fatal error.}"
+        local hosts=""
+        for host in "${host_arr[@]}"; do
+            hosts="$hosts '$host'"
+        done
+        echo "$hosts"
+    }
+
     for entry in ${letsencrypt_services[@]}; do
         IFS=";" read name host email keysize test_var account_alias restart min_validity <<< "$entry"
         name=$(echo "$name" | clean_name)
+        host="$(parse_host "$host")"
         check email
         check keysize
         check test_var
         check account_alias
         check restart
         check min_validity
-        printf "LETSENCRYPT_"$name"_HOST=( '"$host"' )\n" >> "$destination"
-        printf "LETSENCRYPT_"$name"_EMAIL=\"$email\"\n" >> "$destination"
-        printf "LETSENCRYPT_"$name"_KEYSIZE=\"$test_var\"\n" >> "$destination"
-        printf "LETSENCRYPT_"$name"_ACCOUNT_ALIAS=\"$account_alias\"\n" >> "$destination"
-        printf "LETSENCRYPT_"$name"_RESTART_CONTAINER=\"$restart\"\n" >> "$destination"
-        printf "LETSENCRYPT_"$name"_MIN_VALIDITY=\"$min_validity\"\n" >> "$destination"
+        printf "LETSENCRYPT_${name}_HOST=($host)\n" >> "$destination"
+        printf "LETSENCRYPT_${name}_EMAIL=\"$email\"\n" >> "$destination"
+        printf "LETSENCRYPT_${name}_KEYSIZE=\"$test_var\"\n" >> "$destination"
+        printf "LETSENCRYPT_${name}_ACCOUNT_ALIAS=\"$account_alias\"\n" >> "$destination"
+        printf "LETSENCRYPT_${name}_RESTART_CONTAINER=\"$restart\"\n" >> "$destination"
+        printf "LETSENCRYPT_${name}_MIN_VALIDITY=\"$min_validity\"\n" >> "$destination"
     done
 }
 process_services() {
@@ -109,7 +119,7 @@ process_ssl_services() {
         account_alias: .Spec.Labels."reverseproxy.account_alias", 
         restart: .Spec.Labels."reverseproxy.restart", 
         min_validitiy: .Spec.Labels."reverseproxy.min_validity"
-    } | .host |= (. as $id | sub(" "; $id[0:1])
+    } | .host |= sub(" "; "|" )
     | "\(.name);\(.host);\(.email);\(.key_size);\(.test);\(.account_alias);\(.restart);\(.min_validity)"' || {
         log_error "Failed to parse SSL state" >&2
         return 1

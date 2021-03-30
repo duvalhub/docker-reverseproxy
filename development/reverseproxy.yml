@@ -50,5 +50,5 @@ services:
       - nginx-vhost:/etc/nginx/vhost.d
       - nginx-public:/usr/share/nginx/html
 
-
+w
  
