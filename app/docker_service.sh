@@ -27,7 +27,7 @@ done
 ##########################
 source functions.sh
 source nginx_utils.sh
-source letsencrypt_service --source-only
+source letsencrypt_utils.sh
 
 ##########################
 # Functions
@@ -163,9 +163,11 @@ evaluate_ssl_state() {
     local service_state_processed="$services_state.processed"
     local letsencrypt_service_data="letsencrypt_service_data"
     cat "$services_state" | process_ssl_services > "$service_state_processed"
+    log_debug "Generate lets_encrypt_service data..."
     generate_lets_encrypt_service_data "$service_state_processed" "$letsencrypt_service_data"
-    local letsencrypt_service="update_certs"
-    "$letsencrypt_service" "$letsencrypt_service_data"
+    log_debug "Call Lets Encrypt..."
+    update_certs "$letsencrypt_service_data"
+    log_debug "Evaluate if nginx need to be reloaded..."
     evaluate_state
 }
 

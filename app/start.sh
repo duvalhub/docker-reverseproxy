@@ -33,7 +33,7 @@ done
 # SIGTERM-handler
 term_handler() {
     log_info "[start.sh] Received termination signal. Propagating to child..."
-    [[ -n "$process_docker_services_pid" ]] && kill $process_docker_services_pid
+    [[ -n "$docker_service_pid" ]] && kill $docker_service_pid
 
     source functions.sh
     remove_all_location_configurations
@@ -46,12 +46,12 @@ trap 'term_handler' INT QUIT TERM
 ##########################
 # Begin
 ##########################
-log_debug "Starting process_docker_services..."
+log_debug "Starting Docker Service Watcher..."
 
-./process_docker_services.sh &
-process_docker_services_pid=$!
+./docker_service.sh &
+docker_service_pid=$!
 
-log_debug "process_docker_services running on id '$process_docker_services_pid'"
+log_debug "docker_service running on id '$docker_service_pid'"
 
 handle_events() {
     declare -r now=$(epoch_seconds)
@@ -60,9 +60,9 @@ handle_events() {
     log_debug "Event: $event"
     if [[ "$time_elapsed" -gt "$minimum_elasped" ]]; then
         log_info "Enough time has passed. Elapsed $time_elapsed > Threshold $minimum_elasped. Triggering a new run"
-        log_debug "Events detected. Killing process_docker_services '$process_docker_services_pid'..."
+        log_debug "Events detected. Killing docker_service'$docker_service_pid'..."
         log_debug "Event: $event"
-        kill -1 "$process_docker_services_pid"
+        kill -1 "$docker_service_pid"
         last_triggered=$(epoch_seconds)
     else
         log_info "Not enough time has passed since last trigger. Elapsed $time_elapsed < Threshold $minimum_elasped"
