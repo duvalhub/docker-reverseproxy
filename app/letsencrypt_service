@@ -120,6 +120,8 @@ function cleanup_links {
           done
       done
       return 0
+    else
+        return 1
     fi
 }
 
@@ -326,7 +328,7 @@ function update_certs {
 
     done
 
-    cleanup_links && should_reload_nginx='true'
+    cleanup_links && should_reload_nginx='true' || true
 
     [[ "$should_reload_nginx" == 'true' ]] && reload_nginx
 }
