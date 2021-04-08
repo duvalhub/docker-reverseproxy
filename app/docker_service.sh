@@ -114,7 +114,7 @@ process_ssl_services() {
         account_alias: .Spec.Labels."reverseproxy.account_alias", 
         restart: .Spec.Labels."reverseproxy.restart", 
         min_validitiy: .Spec.Labels."reverseproxy.min_validity"
-    } | .host |= sub(" "; "|" )
+    } | .host |= gsub(" "; "|" )
     | "\(.name);\(.host);\(.email);\(.key_size);\(.test);\(.account_alias);\(.restart);\(.min_validity)"' || {
         log_error "Failed to parse SSL state" >&2
         return 1
@@ -192,11 +192,11 @@ _exit() {
 trap _trap EXIT
 trap _exit INT TERM
 
-log_debug "##############################################################"
-log_debug "##############################################################"
-log_debug "# SCRIPT START"
-log_debug "##############################################################"
-log_debug "##############################################################"
+log_debug "##############################################################
+##############################################################
+# SCRIPT START
+##############################################################
+##############################################################"
 log_info "Evaluating if Nginx conf has to be reload and/or  SSL Certs has to be generated..."
 services_state="docker-services.json"
 log_info "Retrieving Docker Service state into '$services_state'..."
