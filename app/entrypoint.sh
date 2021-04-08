@@ -18,7 +18,7 @@ case "$MODE" in
     dev) 
         export DEVELOPMENT="true"
     ;;
-    staging)
+    stage)
         export ACME_CA_URI="https://acme-staging-v02.api.letsencrypt.org/directory"
     ;;
     prod)
