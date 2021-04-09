@@ -83,15 +83,7 @@ generate_lets_encrypt_service_data() {
     done
 }
 process_services() {
-    local data="$1"
-    if [ -z "$data" ]; then
-        read data
-    fi
-    if [[ -z "$data" ]]; then
-        log_error "Services data is empty." >&2
-        return 1
-    fi
-    echo "$data" | jq -e -r '.[] | select(.Spec.Labels | has("reverseproxy.host")) | 
+    jq -e -r '.[] | select(.Spec.Labels | has("reverseproxy.host")) | 
     {
         name: .Spec.Name, 
         host: .Spec.Labels."reverseproxy.host", 

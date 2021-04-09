@@ -19,6 +19,7 @@ case "$1" in
         echo "--email       Optional. Email to give to CA (LetsEncrypt) to be notify of expiring certificates. Recommended to give valid email. Default none. "
         echo "--mode        Optional. Choices are dev (self-signed), stage (staging ca), prod (trusted certificat). Default prod"
         echo "--debug       Optional. Log level debug. Default false"
+        echo "--version     Optional. Nginx Companion Version. Default latest"
         echo "--stack-name  Optional. Docker Stack Name. Default $deployment_name"
         echo "-f|--file     Optional. Deployment file describing the stack. Default $deployment_file"
         exit 1 
