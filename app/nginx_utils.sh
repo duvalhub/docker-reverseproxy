@@ -102,15 +102,14 @@ nginx_write_http_block() {
     local -i port="${params[2]:-80}"
     cat <<-EOF
 # BEGIN $name
-upstream $base_domain {
-    server $name:$port;
-}
 server {
     server_name $dns;
     listen 80 ;
+    resolver 127.0.0.11 valid=30s;
     include /etc/nginx/vhost.d/default;
     location / {
-        proxy_pass http://$base_domain;
+        set \$upstream $name:$port;
+        proxy_pass http://\$upstream;
     }
 }
 # END $name
@@ -125,9 +124,6 @@ nginx_write_https_block() {
     local -i port="${params[2]:-80}"
     cat <<-EOF
 # BEGIN $name
-upstream $base_domain {
-    server $name:$port;
-}
 server {
     server_name $dns;
     listen 80 ;
@@ -140,6 +136,7 @@ server {
 server {
     server_name $dns;
     listen 443 ssl http2 ;
+    resolver 127.0.0.11 valid=30s;
     access_log /var/log/nginx/access.log vhost;
     ssl_session_timeout 5m;
     ssl_session_cache shared:SSL:50m;
@@ -147,7 +144,8 @@ server {
     ssl_certificate /etc/nginx/certs/$base_domain.crt;
     ssl_certificate_key /etc/nginx/certs/$base_domain.key;
     location / {
-        proxy_pass http://$base_domain;
+        set \$upstream $name:$port;
+        proxy_pass http://\$upstream;
     }
 }
 # END $name

@@ -20,6 +20,7 @@ if [[ "$version" != "latest" && ! -z "$(git status --porcelain)" ]]; then
   exit 1
 fi
 
+echo "Building and Releasing $image..."
 docker build -t "$image" .
 docker push "$image"
 
