@@ -1,6 +1,16 @@
 #!/bin/bash
 set -e
 
+#######################
+# Functions
+#######################
+deploy-file-is-remote() {
+    test "$deployment_file" = "https://"* 
+}
+
+#######################
+# Arguments
+#######################
 declare deployment_file="deployment.yml"
 declare deployment_name="reverseproxy"
 export MODE=prod
@@ -30,7 +40,7 @@ esac; shift; done
 
 
 declare deploy_file_tmp="$deployment_file"
-if [ "$deployment_file" = "https://"* ]; then
+if deploy-file-is-remote; then
     echo "Downloading deployment file from '$deployment_file'..."
     deploy_file_tmp=$(mktemp)
     curl -o "$deploy_file_tmp" "$deployment_file"
@@ -42,3 +52,5 @@ fi
 
 echo "Deploying $deployment_name into context $env..."
 docker --context "$env" stack deploy -c "$deploy_file_tmp" "$deployment_name"
+
+deploy-file-is-remote && rm -f "$deploy_file_tmp" 
