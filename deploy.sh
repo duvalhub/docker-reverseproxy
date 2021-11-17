@@ -43,8 +43,9 @@ esac; shift; done
 [ ! -f "$deployment_file" ] && deployment_file="https://raw.githubusercontent.com/duvalhub/docker-reverseproxy/support-external-deployment/deployment.yml"
 if deploy-file-is-remote; then
     echo "Downloading deployment file from '$deployment_file'..."
-    deployment_file=$(mktemp)
-    curl -o "$deployment_file" "$deployment_file"
+    deployment_file_tmp=$(mktemp)
+    curl -o "$deployment_file_tmp" "$deployment_file"
+    mv "$deployment_file_tmp" "$deployment_file"
 fi
 if [[ ! -f "$deployment_file" ]]; then
     echo "Deployment file '$deployment_file' does not exist..."
