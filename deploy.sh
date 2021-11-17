@@ -38,7 +38,7 @@ case "$1" in
     ;;
 esac; shift; done
 [ -z "$env" ] && echo "Missing --env param" && exit 1
-[ ! -f "$deployment_file" ] && deployment_file="https://raw.githubusercontent.com/duvalhub/docker-reverseproxy/support-external-deployment/deployment.yml"
+[ ! -f "$deployment_file" ] && deployment_file="https://raw.githubusercontent.com/duvalhub/docker-reverseproxy/main/deployment.yml"
 
 if deploy-file-is-remote; then
     echo "Downloading deployment file from '$deployment_file'..."
