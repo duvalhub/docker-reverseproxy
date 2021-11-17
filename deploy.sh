@@ -5,7 +5,7 @@ set -e
 # Functions
 #######################
 deploy-file-is-remote() {
-    test "$deployment_file" = "https://"* 
+    [[ "$deployment_file" = "https://"* ]]
 }
 
 #######################
@@ -37,13 +37,15 @@ case "$1" in
         exit 1 
     ;;
 esac; shift; done
+[ -z "$env" ] && echo "Missing --env param" && exit 1
+[ ! -f "$deployment_file" ] && deployment_file="https://raw.githubusercontent.com/duvalhub/docker-reverseproxy/support-external-deployment/deployment.yml"
 
-
-declare deploy_file_tmp="$deployment_file"
 if deploy-file-is-remote; then
     echo "Downloading deployment file from '$deployment_file'..."
-    deploy_file_tmp=$(mktemp)
-    curl -o "$deploy_file_tmp" "$deployment_file"
+    deployment_file_tmp=$(mktemp)
+    curl -o "$deployment_file_tmp" "$deployment_file"
+    deployment_file="$(mktemp)"
+    mv "$deployment_file_tmp" "$deployment_file"
 fi
 if [[ ! -f "$deployment_file" ]]; then
     echo "Deployment file '$deployment_file' does not exist..."
@@ -51,6 +53,6 @@ if [[ ! -f "$deployment_file" ]]; then
 fi
 
 echo "Deploying $deployment_name into context $env..."
-docker --context "$env" stack deploy -c "$deploy_file_tmp" "$deployment_name"
+docker --context "$env" stack deploy -c "$deployment_file" "$deployment_name"
 
-deploy-file-is-remote && rm -f "$deploy_file_tmp" 
+deploy-file-is-remote && rm -f "$deployment_file" 
