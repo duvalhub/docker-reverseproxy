@@ -8,6 +8,20 @@ deploy-file-is-remote() {
     [[ "$deployment_file" = "https://"* ]]
 }
 
+create-vhost-default() {
+    declare -r vhost_path="/var/lib/docker/volumes/reverseproxy_nginx-vhost/_data/default"
+    echo '[ ! -f "'$vhost_path'" ] && echo '"'"'## Start of configuration add by letsencrypt container
+location ^~ /.well-known/acme-challenge/ {
+    auth_basic off;
+    auth_request off;
+    allow all;
+    root /usr/share/nginx/html;
+    try_files $uri =404;
+    break;
+}
+## End of configuration add by letsencrypt container'"'"' > '$vhost_path'' | ssh "root@$env.duvalhub.com" "bash -s"
+}
+
 #######################
 # Arguments
 #######################
@@ -54,5 +68,6 @@ fi
 
 echo "Deploying $deployment_name into context $env..."
 docker --context "$env" stack deploy -c "$deployment_file" "$deployment_name"
-
-deploy-file-is-remote && rm -f "$deployment_file" 
+echo "Creating default files into context $env..."
+create-vhost-default
+deploy-file-is-remote && rm -f "$deployment_file"
